@@ -1,0 +1,5 @@
+.nextflow*
+.DS_Store
+work/*
+workflow-diagrams/*
+*.swp
