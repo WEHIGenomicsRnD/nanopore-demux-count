@@ -3,28 +3,29 @@ process trim_primer {
 
     publishDir params.outdir, mode: 'copy'
 
-    conda "${projectDir}/envs/cutadapt.yaml"
+    conda "${projectDir}/envs/biopython.yaml"
 
     input:
     path fastq
-    val primer
+    val fwd_primer
+    val rev_primer
     val mismatches
-    val primer_type
+    val barcode_length
+    val log
 
     output:
-    path "*.fastq"
+    path "*.fastq.gz"
 
     script:
     def fastqName = fastq.getSimpleName()
-    def option = primer_type == 'fwd' ? '--front' : '--adapter'
-    def outFile = "${fastqName}_${primer_type}.fastq"
+    def outFile = "${fastqName}_trimmed.fastq.gz"
+    def logArg = log ? "" : "--log"
     """
-    cutadapt \
-        ${option} ${primer} \
-        --errors ${mismatches} \
-        --cores ${task.cpus} \
-        --discard-untrimmed \
-        -o ${outFile} \
-        ${fastq}
+    trim_primer.py \
+        --fwd_primer ${fwd_primer} \
+        --rev_primer ${rev_primer} \
+        --mismatches ${mismatches} \
+        --barcode_length ${barcode_length} \
+        ${logArg} ${fastq} | gzip > ${outFile}
     """
 }
