@@ -14,7 +14,13 @@ include { trim_primer } from './modules/trim.nf'
 
 workflow {
 
-    input_ch = Channel.fromPath(params.input)
+    Channel.fromPath("${params.input_dir}/*.{fq,fastq}{,.gz}")
+             .ifEmpty {
+                     error("""
+                     No samples could be found! Please check whether your input directory
+                     contains any fastq files (.fq or .fastq with optional .gz compression).
+                     """)
+         }.set{input_ch}
 
     trim_primer(input_ch, params.fwd_primer, params.rev_primer, params.mismatches, params.barcode_length, params.log)
 
