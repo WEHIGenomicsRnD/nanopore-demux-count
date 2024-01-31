@@ -70,7 +70,8 @@ def parse_args():
  
     return parser.parse_args()
 
-def trim_read(read_id, read_seq, fwd_primer, rev_primer, mismatches, barcode_length, logfile):
+def trim_read(read_id, read_seq, fwd_primer, rev_primer, mismatches, barcode_length, logfile, rc_read=False):
+    read_seq = rc(read_seq) if rc_read else read_seq
     fwd_result = edlib.align(fwd_primer, read_seq, mode="HW", task="path", k=mismatches)
     rev_result = edlib.align(rev_primer, read_seq, mode="HW", task="path", k=mismatches)
 
@@ -79,12 +80,12 @@ def trim_read(read_id, read_seq, fwd_primer, rev_primer, mismatches, barcode_len
         end = rev_result["locations"][0][1] + barcode_length
 
         if start < 0 or end > len(read_seq):
-            if logfile: logging.debug("Failed to trim read %s (barcode partially missing)", read_id)
+            if logfile and rc_read: logging.debug("Failed to trim read %s (barcode partially missing)", read_id)
             return None
 
         return read_seq[start:end]
 
-    elif logfile:
+    elif logfile and rc_read:
         logging.debug("Failed to trim read %s (primers not found)", read_id)
 
     return None
@@ -107,13 +108,13 @@ def main():
         for read_id, read_seq, read_qual in FastqGeneralIterator(in_handle):
             trimmed_seq = trim_read(read_id, read_seq, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, logfile)
             if trimmed_seq:
-                print("@%s\n%s\n+\n%s\n" % (read_id, trimmed_seq, read_qual))
+                print("@%s\n%s\n+\n%s" % (read_id, trimmed_seq, read_qual))
                 continue
 
             # try with reverse complement
-            trimmed_seq = trim_read(read_id, rc(read_seq), args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, logfile)
+            trimmed_seq = trim_read(read_id, read_seq, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, logfile, rc_read=True)
             if trimmed_seq:
-                print("@%s\n%s\n+\n%s\n" % (read_id, trimmed_seq, read_qual))
+                print("@%s\n%s\n+\n%s" % (read_id, trimmed_seq, read_qual))
 
 if __name__ == "__main__":
     main()
