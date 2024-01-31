@@ -64,9 +64,9 @@ def parse_args():
                         default=13,
                         type=int,
                         help='Barcode length.')
-    parser.add_argument('--log',
+    parser.add_argument('--quiet',
                         action='store_true',
-                        help='Write log file.')
+                        help='Do not write log file.')
  
     return parser.parse_args()
 
@@ -92,8 +92,9 @@ def trim_read(read_id, read_seq, fwd_primer, rev_primer, mismatches, barcode_len
 def main():
     args = parse_args()
 
-    logfile = None
-    if args.log:
+    if args.quiet:
+        logfile = None
+    else:
         logfile = datetime.now().strftime('runlog_%H_%M_%d_%m_%Y.log')
         init_log(logfile)
 

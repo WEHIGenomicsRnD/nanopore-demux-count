@@ -15,11 +15,12 @@ process trim_primer {
 
     output:
     path "*.fastq.gz"
+    path "*.log"
 
     script:
     def fastqName = fastq.getSimpleName()
     def outFile = "${fastqName}_trimmed.fastq.gz"
-    def logArg = log ? "" : "--log"
+    def logArg = log ? "" : "--quiet"
     """
     trim_primer.py \
         --fwd_primer ${fwd_primer} \
