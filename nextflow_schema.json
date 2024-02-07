@@ -55,15 +55,17 @@
                     "default": 13,
                     "description": "Length of barcode sequence."
                 },
-                "log": {
+                "output_untrimmed": {
                     "type": "boolean",
-                    "default": true,
-                    "description": "Write a log file when processing reads."
+                    "default": false,
+                    "description": "Whether to output untrimmed reads."
                 }
             },
             "required": [
                 "fwd_primer",
-                "rev_primer"
+                "rev_primer",
+                "mismatches",
+                "barcode_length"
             ]
         }
     },

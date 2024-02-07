@@ -22,6 +22,6 @@ workflow {
                      """)
          }.set{input_ch}
 
-    trim_primer(input_ch, params.fwd_primer, params.rev_primer, params.mismatches, params.barcode_length, params.log)
+    trim_primer(input_ch, params.fwd_primer, params.rev_primer, params.mismatches, params.barcode_length, params.output_untrimmed)
 
 }

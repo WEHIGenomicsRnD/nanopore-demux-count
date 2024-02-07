@@ -11,22 +11,22 @@ process trim_primer {
     val rev_primer
     val mismatches
     val barcode_length
-    val log
+    val output_untrimmed
 
     output:
-    path "*.fastq.gz"
-    path "*.log"
+    path "*.fastq*"
 
     script:
     def fastqName = fastq.getSimpleName()
     def outFile = "${fastqName}_trimmed.fastq.gz"
-    def logArg = log ? "" : "--quiet"
+    def untrimmedFastq = output_untrimmed ? "--untrimmed_fastq ${fastqName}_untrimmed.fastq" : ""
     """
     trim_primer.py \
         --fwd_primer ${fwd_primer} \
         --rev_primer ${rev_primer} \
         --mismatches ${mismatches} \
         --barcode_length ${barcode_length} \
-        ${logArg} ${fastq} | gzip > ${outFile}
+        ${untrimmedFastq} \
+        ${fastq} | gzip > ${outFile}
     """
 }

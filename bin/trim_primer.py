@@ -7,8 +7,6 @@ License     : TBD
 Maintainer  : Marek Cmero
 Portability : POSIX
 '''
-import logging
-import os
 import gzip
 import edlib
 from Bio.SeqIO.QualityIO import FastqGeneralIterator
@@ -16,16 +14,6 @@ from datetime import datetime
 from argparse import ArgumentParser
 
 tab = str.maketrans("ACTG", "TGAC")
-
-def init_log(filename):
-    '''
-    Initialise logging
-    '''
-    logging.basicConfig(filename=filename,
-                        level=logging.DEBUG,
-                        filemode='w',
-                        format='%(asctime)s %(levelname)s - %(message)s',
-                        datefmt="%Y-%m-%dT%H:%M:%S%z")
 
 def rc(seq):
     # reverse complement sequence
@@ -64,13 +52,14 @@ def parse_args():
                         default=13,
                         type=int,
                         help='Barcode length.')
-    parser.add_argument('--quiet',
-                        action='store_true',
-                        help='Do not write log file.')
+    parser.add_argument('--untrimmed_fastq',
+                        type=str,
+                        default='',
+                        help='Output file where to write untrimmed reads (optional).')
  
     return parser.parse_args()
 
-def trim_read(read_id, read_seq, fwd_primer, rev_primer, mismatches, barcode_length, logfile, rc_read=False):
+def trim_read(read_id, read_seq, read_qual, fwd_primer, rev_primer, mismatches, barcode_length, untrimmed_out, rc_read=False):
     read_seq = rc(read_seq) if rc_read else read_seq
     fwd_result = edlib.align(fwd_primer, read_seq, mode="HW", task="path", k=mismatches)
     rev_result = edlib.align(rev_primer, read_seq, mode="HW", task="path", k=mismatches)
@@ -79,25 +68,24 @@ def trim_read(read_id, read_seq, fwd_primer, rev_primer, mismatches, barcode_len
         start = fwd_result["locations"][0][0] - barcode_length
         end = rev_result["locations"][0][1] + barcode_length
 
-        if start < 0 or end > len(read_seq):
-            if logfile and rc_read: logging.debug("Failed to trim read %s (barcode partially missing)", read_id)
+        if untrimmed_out and rc_read and (start < 0 or end > len(read_seq)):
+            untrimmed_out.write("@%s\n%s\n+\n%s\n" % (read_id, read_seq, read_qual))
             return None
 
         return read_seq[start:end]
 
-    elif logfile and rc_read:
-        logging.debug("Failed to trim read %s (primers not found)", read_id)
+    if untrimmed_out and rc_read:
+        untrimmed_out.write("@%s\n%s\n+\n%s\n" % (read_id, read_seq, read_qual))
 
     return None
 
 def main():
     args = parse_args()
 
-    if args.quiet:
-        logfile = None
+    if args.untrimmed_fastq.strip() != "":
+        untrimmed_out = open(args.untrimmed_fastq, "w")
     else:
-        logfile = datetime.now().strftime('runlog_%H_%M_%d_%m_%Y.log')
-        init_log(logfile)
+        untrimmed_out = None
 
     if args.reads.endswith(".gz"):
         in_handle = gzip.open(args.reads, "rt")
@@ -106,15 +94,18 @@ def main():
 
     with in_handle:
         for read_id, read_seq, read_qual in FastqGeneralIterator(in_handle):
-            trimmed_seq = trim_read(read_id, read_seq, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, logfile)
+            trimmed_seq = trim_read(read_id, read_seq, read_qual, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, untrimmed_out)
             if trimmed_seq:
                 print("@%s\n%s\n+\n%s" % (read_id, trimmed_seq, read_qual))
                 continue
 
             # try with reverse complement
-            trimmed_seq = trim_read(read_id, read_seq, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, logfile, rc_read=True)
+            trimmed_seq = trim_read(read_id, read_seq, read_qual, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, untrimmed_out, rc_read=True)
             if trimmed_seq:
                 print("@%s\n%s\n+\n%s" % (read_id, trimmed_seq, read_qual))
+
+    if untrimmed_out:
+        untrimmed_out.close()
 
 if __name__ == "__main__":
     main()
