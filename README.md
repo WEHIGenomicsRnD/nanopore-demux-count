@@ -34,7 +34,7 @@ nextflow run main.nf --input_dir $path_to_fastqs \
 
 Here are the parameters you will need to set:
 
-- `--inputdir`: full path to folder containing your read files. Files must be FASTQ format (.fq or .fastq extension). Optionally, they may be gzipped.
+- `--input_dir`: full path to folder containing your read files. Files must be FASTQ format (.fq or .fastq extension). Optionally, they may be gzipped.
 - `--output_dir`: directory path where output is written.
 - `--fwd_primer`: forward primer sequence.
 - `--rev_primer`: reverse primer sequence.

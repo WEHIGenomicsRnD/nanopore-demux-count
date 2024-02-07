@@ -12,7 +12,7 @@
             "description": "Define where the pipeline should find input data and save output data.",
             "required": [
                 "outdir",
-                "inputdir"
+                "input_dir"
             ],
             "properties": {
                 "outdir": {
@@ -21,7 +21,7 @@
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage",
                     "fa_icon": "fas fa-folder-open"
                 },
-                "inputdir": {
+                "input_dir": {
                     "type": "string",
                     "fa_icon": "fas fa-folder-open",
                     "description": "Input directory containing your fastq file(s). You have to use absolute paths to storage.",
