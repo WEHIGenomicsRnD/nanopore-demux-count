@@ -72,7 +72,7 @@ def trim_read(read_id, read_seq, read_qual, fwd_primer, rev_primer, mismatches, 
             untrimmed_out.write("@%s\n%s\n+\n%s\n" % (read_id, read_seq, read_qual))
             return None
 
-        return read_seq[start:end]
+        return read_seq[start:(end+1)]
 
     if untrimmed_out and rc_read:
         untrimmed_out.write("@%s\n%s\n+\n%s\n" % (read_id, read_seq, read_qual))
