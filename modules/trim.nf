@@ -15,6 +15,7 @@ process trim_primer {
 
     output:
     path "*.fastq*"
+    path "*.txt"
 
     script:
     def fastqName = fastq.getSimpleName()

@@ -59,7 +59,7 @@ def parse_args():
  
     return parser.parse_args()
 
-def trim_read(read_id, read_seq, read_qual, fwd_primer, rev_primer, mismatches, barcode_length, untrimmed_out, rc_read=False):
+def trim_read(read_seq, fwd_primer, rev_primer, mismatches, barcode_length, rc_read=False):
     read_seq = rc(read_seq) if rc_read else read_seq
     fwd_result = edlib.align(fwd_primer, read_seq, mode="HW", task="path", k=mismatches)
     rev_result = edlib.align(rev_primer, read_seq, mode="HW", task="path", k=mismatches)
@@ -68,14 +68,11 @@ def trim_read(read_id, read_seq, read_qual, fwd_primer, rev_primer, mismatches, 
         start = fwd_result["locations"][0][0] - barcode_length
         end = rev_result["locations"][0][1] + barcode_length
 
-        if untrimmed_out and rc_read and (start < 0 or end > len(read_seq)):
-            untrimmed_out.write("@%s\n%s\n+\n%s\n" % (read_id, read_seq, read_qual))
+        if start < 0 or end > len(read_seq):
+            # cannot trim at correct barcode position
             return None
 
         return read_seq[start:(end+1)]
-
-    if untrimmed_out and rc_read:
-        untrimmed_out.write("@%s\n%s\n+\n%s\n" % (read_id, read_seq, read_qual))
 
     return None
 
@@ -92,17 +89,34 @@ def main():
     else:
         in_handle = open(args.reads, "r")
 
+    trimmed_reads, untrimmed_reads, total_reads = 0, 0, 0
     with in_handle:
         for read_id, read_seq, read_qual in FastqGeneralIterator(in_handle):
-            trimmed_seq = trim_read(read_id, read_seq, read_qual, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, untrimmed_out)
+            total_reads += 1
+            trimmed_seq = trim_read(read_seq, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length)
             if trimmed_seq:
+                trimmed_reads += 1
                 print("@%s\n%s\n+\n%s" % (read_id, trimmed_seq, read_qual))
                 continue
 
             # try with reverse complement
-            trimmed_seq = trim_read(read_id, read_seq, read_qual, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, untrimmed_out, rc_read=True)
+            trimmed_seq = trim_read(read_seq, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, rc_read=True)
             if trimmed_seq:
+                trimmed_reads += 1
                 print("@%s\n%s\n+\n%s" % (read_id, trimmed_seq, read_qual))
+            elif untrimmed_out:
+                # couldn't trim
+                untrimmed_reads += 1
+                untrimmed_out.write("@%s\n%s\n+\n%s\n" % (read_id, read_seq, read_qual))
+
+    # print stats to file
+    with open("trim_primer_stats.txt", "w") as stats_file:
+        stats_file.write("Trimmed reads: %d\n" % trimmed_reads)
+        if untrimmed_out:
+            stats_file.write("Untrimmed reads: %d\n" % untrimmed_reads)
+        stats_file.write("Total reads: %d\n" % total_reads)
+        stats_file.write("Mismatches: %d\n" % args.mismatches)
+        stats_file.write("Barcode length: %d" % args.barcode_length)
 
     if untrimmed_out:
         untrimmed_out.close()
