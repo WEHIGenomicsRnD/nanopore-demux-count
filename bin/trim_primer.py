@@ -83,7 +83,7 @@ def main():
     args = parse_args()
 
     if args.untrimmed_fastq.strip() != "":
-        untrimmed_out = open(args.untrimmed_fastq, "w")
+        untrimmed_out = gzip.open(args.untrimmed_fastq, "wt")
     else:
         untrimmed_out = None
 

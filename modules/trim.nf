@@ -19,7 +19,7 @@ process trim_primer {
     script:
     def fastqName = fastq.getSimpleName()
     def outFile = "${fastqName}_trimmed.fastq.gz"
-    def untrimmedFastq = output_untrimmed ? "--untrimmed_fastq ${fastqName}_untrimmed.fastq" : ""
+    def untrimmedFastq = output_untrimmed ? "--untrimmed_fastq ${fastqName}_untrimmed.fastq.gz" : ""
     """
     trim_primer.py \
         --fwd_primer ${fwd_primer} \
