@@ -59,7 +59,7 @@ def parse_args():
  
     return parser.parse_args()
 
-def trim_read(read_seq, fwd_primer, rev_primer, mismatches, barcode_length, rc_read=False):
+def trim_read(read_seq, read_qual, fwd_primer, rev_primer, mismatches, barcode_length, rc_read=False):
     read_seq = rc(read_seq) if rc_read else read_seq
     fwd_result = edlib.align(fwd_primer, read_seq, mode="HW", task="path", k=mismatches)
     rev_result = edlib.align(rev_primer, read_seq, mode="HW", task="path", k=mismatches)
@@ -70,11 +70,11 @@ def trim_read(read_seq, fwd_primer, rev_primer, mismatches, barcode_length, rc_r
 
         if start < 0 or end > len(read_seq):
             # cannot trim at correct barcode position
-            return None
+            return None, None
 
-        return read_seq[start:(end+1)]
+        return (read_seq[start:(end+1)], read_qual[start:(end+1)])
 
-    return None
+    return None, None
 
 def main():
     args = parse_args()
@@ -93,17 +93,17 @@ def main():
     with in_handle:
         for read_id, read_seq, read_qual in FastqGeneralIterator(in_handle):
             total_reads += 1
-            trimmed_seq = trim_read(read_seq, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length)
+            trimmed_seq, trimmed_qal = trim_read(read_seq, read_qual, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length)
             if trimmed_seq:
                 trimmed_reads += 1
-                print("@%s\n%s\n+\n%s" % (read_id, trimmed_seq, read_qual))
+                print("@%s\n%s\n+\n%s" % (read_id, trimmed_seq, trimmed_qal))
                 continue
 
             # try with reverse complement
-            trimmed_seq = trim_read(read_seq, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, rc_read=True)
+            trimmed_seq, trimmed_qal = trim_read(read_seq, read_qual, args.fwd_primer, args.rev_primer, args.mismatches, args.barcode_length, rc_read=True)
             if trimmed_seq:
                 trimmed_reads += 1
-                print("@%s\n%s\n+\n%s" % (read_id, trimmed_seq, read_qual))
+                print("@%s\n%s\n+\n%s" % (read_id, trimmed_seq, trimmed_qal))
             elif untrimmed_out:
                 # couldn't trim
                 untrimmed_reads += 1
