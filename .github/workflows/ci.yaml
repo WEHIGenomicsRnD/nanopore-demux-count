@@ -31,6 +31,9 @@ jobs:
         with:
           version: "${{ matrix.NXF_VER }}"
 
+      - name: Install Singularity
+        uses: singularityhub/install-singularity@main
+
       - name: Run pipeline with test data
         run: |
           cd ${GITHUB_WORKSPACE}
