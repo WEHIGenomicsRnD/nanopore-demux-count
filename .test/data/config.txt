@@ -1,0 +1,5 @@
+groups  ids     tags    distances       next    minFindsG       maxFindsG       locations
+Fwd     Fwd_01  TAGATCGC        0       {{Rev}} 1       1       0:0:12
+Fwd     Fwd_02  CTCTCTAT        0       {{Rev}} 1       1       0:0:12
+Rev     Rev_01  TCGCCTTA        0       -       1       1       0:-12:0
+Rev     Rev_02  CTAGTACG        0       -       1       1       0:-12:0

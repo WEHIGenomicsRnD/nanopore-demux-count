@@ -10,7 +10,13 @@ println "*            genomicsrnd@wehi.edu.au                    *"
 println "*                                                       *"
 println "*********************************************************"
 
-include { trim_primer } from './modules/trim.nf'
+include { TrimPrimer } from './modules/trim.nf'
+include { GenerateSelectFile } from './modules/demux.nf'
+include { CreateConfigFile } from './modules/demux.nf'
+include { SplitCode } from './modules/demux.nf'
+if (!workflow.stubRun) {
+    include { fromQuery } from 'plugin/nf-sqldb'
+}
 
 workflow {
 
@@ -22,6 +28,50 @@ workflow {
                      """)
          }.set{input_ch}
 
-    trim_primer(input_ch, params.fwd_primer, params.rev_primer, params.mismatches, params.barcode_length, params.output_untrimmed)
+    trim_ch = TrimPrimer(input_ch,
+                         params.fwd_primer,
+                         params.rev_primer,
+                         params.primer_mismatches,
+                         params.barcode_length,
+                         params.output_untrimmed)
 
+    if (params.demultiplex) {
+        if (!params.is_config_file_provided) {
+            def where_ch = []
+            // Construct the where clause for the query
+            new File(params.index_template_file).readLines().each { line ->
+                if (line.trim() != 'index_name') {
+                    where_ch << "'${line.trim()}'"
+                }
+            }
+            def where_clause = where_ch.join(",")
+            def query = """SELECT index_name,
+                                  index_sequence,
+                                  index_sequence_rc,
+                                  index_direction
+                            FROM amplicon_index
+                            WHERE index_name IN (${where_clause});"""
+            
+            Channel.fromQuery(query, db: 'my-db', batchSize:100)
+                .map { index ->
+                        def id = index[0]
+                        def direction = index[3]
+                        def group = direction == "F" ? "Fwd" : "Rev"
+                        def tag = direction == "F" ? index[1] : index[2] // index_sequence or index_sequence_rc
+                        def distances = direction == 'F' ? "${params.idx_5p_mismatch}" : "${params.idx_3p_mismatch}"
+                        def next = direction == 'F' ? '{{Rev}}' : '-'
+                        def locations = direction == 'F' ? "0:0:${params.bases_num_r1}" : "0:${params.bases_num_r2}:0"
+
+                        return "$group\t$id\t$tag\t$distances\t$next\t1\t1\t$locations"
+                }
+                .collectFile(name: 'config.txt', newLine: true).set{config_ch}
+            CreateConfigFile(config_ch).set{configFile}
+        } else {
+            Channel.fromPath("${params.input_dir}/config.txt").set { configFile }
+        }
+        GenerateSelectFile(file(params.index_template_file)).set{selectTxt}
+        SplitCode(trim_ch.trimmed_ch,
+                  configFile,
+                  selectTxt)
+    }
 }

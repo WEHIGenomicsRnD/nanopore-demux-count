@@ -1,9 +1,11 @@
-process trim_primer {
-    label = 'trim_primer'
+process TrimPrimer {
+    label = 'TrimPrimer'
 
     publishDir params.outdir, mode: 'copy'
 
-    conda "${projectDir}/envs/biopython.yaml"
+    conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
+              params.conda_env_location + '/biopython' :
+              projectDir + '/envs/biopython.yaml' }"
 
     input:
     path fastq
@@ -14,7 +16,8 @@ process trim_primer {
     val output_untrimmed
 
     output:
-    path "*.fastq*"
+    path "*_trimmed.fastq*", emit: trimmed_ch
+    path "*_untrimmed.fastq*", emit: untrimmed_ch, optional: true
     path "*.txt"
 
     script:
