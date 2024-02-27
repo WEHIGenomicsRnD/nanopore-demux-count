@@ -73,22 +73,19 @@ process SplitCode{
     publishDir "${params.outdir}/split/${reads.getSimpleName()}", mode: 'copy'
     container 'oras://ghcr.io/wehi-researchcomputing/splitcode_container:latest'
    
-    
     input:
-    path(reads)
+    tuple val(sampleName), path(reads)
     path(config)
     path(select)
     
-  
     output:
-    path "*.fastq*"
+    tuple val(sampleName), path("*.fastq*"), emit: fastq
     path "*.txt"
-    
 
     script:
     """
     splitcode -c ${config} --keep=${select} -t ${task.cpus} --nFastqs=1 \
-                --assign --summary summary.txt -o out.fastq --gzip \
+                --assign --summary summary.txt -o out.fastq.gz --gzip \
                 --no-outb --mapping mapping.txt --seq-names \
                 --mod-names --com-names --unassigned=unmapped.fastq.gz \
                 ${reads}

@@ -8,7 +8,7 @@ process TrimPrimer {
               projectDir + '/envs/biopython.yaml' }"
 
     input:
-    path fastq
+    tuple val(sampleName), path(fastq)
     val fwd_primer
     val rev_primer
     val mismatches
@@ -16,7 +16,7 @@ process TrimPrimer {
     val output_untrimmed
 
     output:
-    path "*_trimmed.fastq*", emit: trimmed_ch
+    tuple val(sampleName), path("*_trimmed.fastq*"), emit: trimmed_ch
     path "*_untrimmed.fastq*", emit: untrimmed_ch, optional: true
     path "*.txt"
 

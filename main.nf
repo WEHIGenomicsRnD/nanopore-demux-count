@@ -14,6 +14,8 @@ include { TrimPrimer } from './modules/trim.nf'
 include { GenerateSelectFile } from './modules/demux.nf'
 include { CreateConfigFile } from './modules/demux.nf'
 include { SplitCode } from './modules/demux.nf'
+include { IndexGuides } from './modules/count.nf'
+include { CountGuides } from './modules/count.nf'
 if (!workflow.stubRun) {
     include { fromQuery } from 'plugin/nf-sqldb'
 }
@@ -26,7 +28,10 @@ workflow {
                      No samples could be found! Please check whether your input directory
                      contains any fastq files (.fq or .fastq with optional .gz compression).
                      """)
-         }.set{input_ch}
+         }
+         .map{ it -> [it.getSimpleName(), it]}
+         .groupTuple()
+         .set{input_ch}
 
     trim_ch = TrimPrimer(input_ch,
                          params.fwd_primer,
@@ -72,6 +77,14 @@ workflow {
         GenerateSelectFile(file(params.index_template_file)).set{selectTxt}
         SplitCode(trim_ch.trimmed_ch,
                   file("${params.outdir}/config.txt"),
-                  file("${params.outdir}/select.txt"))
+                  file("${params.outdir}/select.txt")).fastq.set{demux_ch}        
+    } else {
+        trim_ch.trimmed_ch.set{demux_ch}
+    }
+
+    if (params.guides_fasta != null && params.guides_fasta != '') {
+        def guidesIndex = file(params.guides_fasta).getSimpleName() + ".mmi"
+        IndexGuides(params.guides_fasta)
+        CountGuides(demux_ch, file("${params.outdir}/${guidesIndex}"))
     }
 }
