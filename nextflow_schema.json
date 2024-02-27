@@ -112,6 +112,20 @@
                 }
             }
         },
+        "count": {
+            "title": "Count options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "guides_fasta" : {
+                    "type": "string",
+                    "default": "",
+                    "fa_icon": "fas fa-file",
+                    "description": "Reference fasta file containing guide sequences (leave blank to skip guide counting)."
+                }
+            }
+        },
         "generic_options": {
             "title": "Generic options",
             "type": "object",
@@ -139,6 +153,9 @@
         },
         {
             "$ref": "#/definitions/demultiplex_options"
+        },
+        {
+            "$ref": "#/definitions/count"
         },
         {
             "$ref": "#/definitions/generic_options"

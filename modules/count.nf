@@ -12,6 +12,7 @@ process IndexGuides {
 
     output:
     path "*.mmi"
+    val true, emit: done
 
     script:
     def guidesName = guides_fasta.getSimpleName()
@@ -31,6 +32,7 @@ process CountGuides {
               projectDir + '/envs/minimap-samtools.yaml' }"
 
     input:
+    val ready
     tuple val(sampleName), path(fastqs)
     path guides_index
 

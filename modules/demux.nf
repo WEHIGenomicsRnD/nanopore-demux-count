@@ -14,7 +14,7 @@ process GenerateSelectFile {
 
     output:
     path "select.txt"
-    
+    val true, emit: done
 
     script:
     """
@@ -49,6 +49,7 @@ process CreateConfigFile {
 
         output:
         path('config.txt') 
+        val true, emit: done
 
         script:
         def header = params.is_config_file_provided ? "" : "groups\tids\ttags\tdistances\tnext\tminFindsG\tmaxFindsG\tlocations\n"
@@ -75,6 +76,8 @@ process SplitCode{
    
     input:
     tuple val(sampleName), path(reads)
+    val configFileReady
+    val selectFileReady
     path(config)
     path(select)
     

@@ -76,6 +76,8 @@ workflow {
         CreateConfigFile(config_ch).set{configFile}
         GenerateSelectFile(file(params.index_template_file)).set{selectTxt}
         SplitCode(trim_ch.trimmed_ch,
+                  configFile.done,
+                  selectTxt.done,
                   file("${params.outdir}/config.txt"),
                   file("${params.outdir}/select.txt")).fastq.set{demux_ch}        
     } else {
@@ -84,7 +86,7 @@ workflow {
 
     if (params.guides_fasta != null && params.guides_fasta != '') {
         def guidesIndex = file(params.guides_fasta).getSimpleName() + ".mmi"
-        IndexGuides(params.guides_fasta)
-        CountGuides(demux_ch, file("${params.outdir}/${guidesIndex}"))
+        IndexGuides(params.guides_fasta).set{index_ch}
+        CountGuides(index_ch.done, demux_ch, file("${params.outdir}/${guidesIndex}"))
     }
 }
