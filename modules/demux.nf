@@ -51,8 +51,9 @@ process CreateConfigFile {
         path('config.txt') 
 
         script:
+        def header = params.is_config_file_provided ? "" : "groups\tids\ttags\tdistances\tnext\tminFindsG\tmaxFindsG\tlocations\n"
         """
-        echo -e "groups\tids\ttags\tdistances\tnext\tminFindsG\tmaxFindsG\tlocations\n\$(cat ${configtxt})" > config.txt
+        echo -e "${header}\$(cat ${configtxt})" > config.txt
         """
         
 }

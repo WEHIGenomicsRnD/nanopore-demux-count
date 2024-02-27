@@ -65,13 +65,13 @@ workflow {
                         return "$group\t$id\t$tag\t$distances\t$next\t1\t1\t$locations"
                 }
                 .collectFile(name: 'config.txt', newLine: true).set{config_ch}
-            CreateConfigFile(config_ch).set{configFile}
         } else {
-            Channel.fromPath("${params.input_dir}/config.txt").set { configFile }
+            Channel.fromPath("${params.input_dir}/config.txt").set{config_ch}
         }
+        CreateConfigFile(config_ch).set{configFile}
         GenerateSelectFile(file(params.index_template_file)).set{selectTxt}
         SplitCode(trim_ch.trimmed_ch,
-                  configFile,
-                  selectTxt)
+                  file("${params.outdir}/config.txt"),
+                  file("${params.outdir}/select.txt"))
     }
 }
