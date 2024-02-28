@@ -76,7 +76,7 @@ workflow {
         CreateConfigFile(config_ch).set{configFile}
         GenerateSelectFile(file(params.index_template_file)).set{selectTxt}
         SplitCode(trim_ch.trimmed_ch,
-                  configFile.done,
+                  configFile.done.first(),
                   selectTxt.done,
                   file("${params.outdir}/config.txt"),
                   file("${params.outdir}/select.txt")).fastq.set{demux_ch}        
