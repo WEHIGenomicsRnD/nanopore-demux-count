@@ -4,7 +4,7 @@ nextflow.enable.dsl = 2
 
 println "*********************************************************"
 println "*                                                       *"
-println "*           Nanopore Overhang preprocess                *"
+println "*           Nanopore Overhang process                   *"
 println "*      Written by Marek Cmero, WEHI Genomics R&D        *"
 println "*            genomicsrnd@wehi.edu.au                    *"
 println "*                                                       *"
@@ -16,7 +16,7 @@ include { CreateConfigFile } from './modules/demux.nf'
 include { SplitCode } from './modules/demux.nf'
 include { IndexGuides } from './modules/count.nf'
 include { CountGuides } from './modules/count.nf'
-if (!workflow.stubRun) {
+if (!workflow.stubRun && params.demultiplex && !params.is_config_file_provided) {
     include { fromQuery } from 'plugin/nf-sqldb'
 }
 

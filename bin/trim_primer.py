@@ -121,7 +121,7 @@ def main():
             stats_file.write(f"Untrimmed reads: {untrimmed_reads} ({percent_untrimmed}%)\n")
         stats_file.write("Total reads: %d\n" % total_reads)
         stats_file.write("Mismatches: %d\n" % args.mismatches)
-        stats_file.write("Barcode length: %d" % args.barcode_length)
+        stats_file.write("Barcode length: %d\n" % args.barcode_length)
 
     if untrimmed_out:
         untrimmed_out.close()
