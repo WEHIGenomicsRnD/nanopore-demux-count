@@ -36,7 +36,7 @@ INDEX_COMBINATIONS = [
 # Guide parameters
 NUM_GUIDES = 20
 GUIDE_LENGTH = 1000
-MIDDLE_SEQUENCE_LENGTH = 800
+
 
 # Functions for introducing variations
 def introduce_mismatch(sequence):
@@ -49,15 +49,18 @@ def introduce_mismatch(sequence):
         sequence[position] = choice(list(bases))
     return ''.join(sequence)
 
+
 def introduce_deletion(sequence):
     if sequence:
         position = randint(0, len(sequence) - 1)
         sequence = sequence[:position] + sequence[position+1:]
     return sequence
 
+
 def reverse_complement(sequence):
     complement = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
     return ''.join(complement[base] for base in reversed(sequence))
+
 
 # Function to generate a single read with variations
 def generate_varied_read(read_id, combination_index, guide_sequences):
@@ -72,15 +75,12 @@ def generate_varied_read(read_id, combination_index, guide_sequences):
     # Create the random sequences
     start_random_sequence = ''.join(choice(NUCLEOTIDES) for _ in range(randint(0, 100)))
     end_random_sequence = ''.join(choice(NUCLEOTIDES) for _ in range(randint(0, 100)))
-    
-    # middle_random_sequence = ''.join(choice(NUCLEOTIDES) for _ in range(800)) 
-    # pick a random guide sequence from the list, then select a random 'window' of sequence
+
+    # pick a random guide sequence from the list
     guide_seq = guide_sequences[randint(0, len(guide_sequences) - 1)]
-    start_pos = randint(0, GUIDE_LENGTH - MIDDLE_SEQUENCE_LENGTH)
-    middle_sequence = guide_seq[start_pos:start_pos + MIDDLE_SEQUENCE_LENGTH]
 
     # Assemble the read
-    sequence = f"{start_random_sequence}{forward_index}{fwd_primer}{middle_sequence}{rev_primer}{reverse_index}{end_random_sequence}"
+    sequence = f"{start_random_sequence}{forward_index}{fwd_primer}{guide_seq}{rev_primer}{reverse_index}{end_random_sequence}"
 
     # Reverse complement 50% of the reads
     if read_id % 2 == 0:
@@ -90,6 +90,7 @@ def generate_varied_read(read_id, combination_index, guide_sequences):
     read_header = f"@varied_read_{read_id}"
 
     return f"{read_header}\n{sequence}\n+\n{quality}\n"
+
 
 # Generate guide sequence fasta
 guide_sequences = []
