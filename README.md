@@ -1,8 +1,11 @@
 # Nanopore Overhang Preprocess
 
-A Nextflow pipeline for the preprocessing of reads using the overhang protocol run on Oxford Nanopore Technology. The pipeline locates the specified forward and reverse primer sequences and trims the read N bases upstream of the forward primer and N bases downstream of the reverse primer. The 5' and 3' ends will then contain index information ready for demultiplexing.
+A Nextflow pipeline for the preprocessing of reads using the overhang protocol run on Oxford Nanopore Technology. The pipeline locates the specified forward and reverse primer sequences and trims the read N bases upstream of the forward primer and N bases downstream of the reverse primer, where N is the barcode length. The pipeline then performs demultiplexing according to the provided barcodes and counts guide sequences if a fasta file of sequences is provided to count against.
 
-The read structure is typically `[sequence][fwd_index][fwd_primer][sequence_of_interest][rev_primer][rev_index][sequence]`. The pipeline trims off the 5' and 3' superfluous 'sequence'. 
+The read structure is typically:
+
+`[sequence][fwd_index][fwd_primer][sequence_of_interest][rev_primer][rev_index][sequence]`
+
 
 ## How to install
 
@@ -27,6 +30,7 @@ nextflow run main.nf --input_dir $path_to_fastqs \
     --rev_primer GTCTGATCGTGCTGCTGAT \
     --mismatches 3 \
     --barcode_length 12 \
+    --guides_fasta $guides_fasta \
     -profile log,milton
 ```
 
@@ -40,4 +44,5 @@ Here are the parameters you will need to set:
 - `--rev_primer`: reverse primer sequence.
 - `--mismatches`: how many mismatches are allowed in the primer sequences. Calculated as the levehnstein edit distance using [edlib](https://github.com/Martinsos/edlib).
 - `--barcode_length`: how many bases to trim to the left and right of the primer sequences. If your barcode includes spacers make sure to take that into account (i.e., non-informative bases between the index and primer).
+- `--guides_fasta`: (optional) fasta file contains guide sequences to count.
 - `--log`: enables logging, which writes the IDs of failed reads to a log file and specifies why each read could not be processed.

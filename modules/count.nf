@@ -42,6 +42,12 @@ process CountGuides {
 
     script:
     def outCounts = "${sampleName}_guide_counts.txt"
+    /*
+    count collation is a hacky bash script to get collated output,
+    the script pastes the count files together, and then cuts out
+    the relevant count fields (keep the first as a label column)
+    we will want to make this into a nice python script later
+    */
     """
     for fastq in ${fastqs};
     do
@@ -52,9 +58,12 @@ process CountGuides {
             samtools view -S -b | \
             samtools sort -o \${sample}.bam
 
-        samtools index \${sample}.bam
-
-        samtools idxstats \${sample}.bam > \${sample}_counts.txt
+        count_guides.py \${sample}.bam ${params.guides_fasta} > \${sample}_counts.txt
     done
+
+    paste *_counts.txt > tmpfile
+    ncounts=\$(expr \$(ls *_counts.txt | wc -l | xargs) \\* 2)
+    fields_to_cut=\$(echo 1 \$(seq 2 2 \$ncounts) | sed 's/ /,/g')
+    cut -f \$fields_to_cut tmpfile > ${outCounts}
     """
 }
