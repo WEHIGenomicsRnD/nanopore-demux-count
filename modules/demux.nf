@@ -52,7 +52,9 @@ process CreateConfigFile {
         val true, emit: done
 
         script:
-        def header = params.is_config_file_provided ? "" : "groups\tids\ttags\tdistances\tnext\tminFindsG\tmaxFindsG\tlocations\n"
+        // add a header if not using a custom config file
+        def header = params.splitcode_config_file == "" || params.splitcode_config_file == null ?
+            "groups\tids\ttags\tdistances\tnext\tminFindsG\tmaxFindsG\tlocations\n" : ""
         """
         echo -e "${header}\$(cat ${configtxt})" > config.txt
         """

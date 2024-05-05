@@ -91,13 +91,13 @@
                 },
                 "idx_5p_mismatch": {
                     "type": "integer",
-                    "default": 0,
-                    "description": "Number of mismatches allowed in 5' index."
+                    "default": 1,
+                    "description": "Number of mismatches allowed in 5' index (default = 1)."
                 },
                 "idx_3p_mismatch": {
                     "type": "integer",
-                    "default": 0,
-                    "description": "Number of mismatches allowed in 3' index."
+                    "default": 1,
+                    "description": "Number of mismatches allowed in 3' index (default = 1)."
                 },
                 "index_template_file": {
                     "type": "string",
@@ -105,12 +105,21 @@
                     "format": "file-path",
                     "description": "Text file containing index names used (must match database or config file IDs)."
                 },
-                "is_config_file_provided": {
+                "use_db" : {
                     "type": "boolean",
                     "default": false,
-                    "description": "Optional ready-made config file for splitcode. Use this to skip the databse index lookup. Must be called config.txt and put in input directory."
+                    "description": "Whether to use the Genomics database for index lookup."
+                },
+                "splitcode_config_file": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Optional ready-made config file for splitcode."
                 }
-            }
+            },
+            "required": [
+                "bases_num_r1",
+                "bases_num_r2"
+            ]
         },
         "count": {
             "title": "Count options",

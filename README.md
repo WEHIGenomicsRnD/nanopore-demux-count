@@ -8,7 +8,6 @@ The read structure is typically:
 
 `[sequence][fwd_index][fwd_primer][sequence_of_interest][rev_primer][rev_index][sequence]`
 
-
 ## How to install (WEHI only)
 
 The easiest way to run the pipeline is to use the [Seqera Platform](https://seqera.services.biocommons.org.au/) service provided to WEHI by Australian Biocommons. You can find more information about Seqera Platform (formerly Nextflow Tower) on WEHI's [Research Computing page](https://wehieduau.sharepoint.com/sites/rc2/SitePages/Nextflow-Tower.aspx). See the [Configuration](https://github.com/WEHIGenomicsRnD/nf-qc-pipe#tower-configuration) section for more info.
@@ -34,7 +33,9 @@ nextflow run main.nf \
     --rev_primer $rev_primer \
     --mismatches 3 \
     --barcode_length 12 \
-    --guides_fasta $guides_fasta
+    --index_template_file $index_file \
+    --guides_fasta $guides_fasta \
+    --use_db false
 ```
 
 If you are running on WEHI's Milton HPC, remember to run `module load nextflow` before running nextflow and also run with `-profile log,milton`.
@@ -49,4 +50,30 @@ Here are the parameters you will need to set:
 - `--rev_primer`: reverse primer sequence.
 - `--mismatches`: how many mismatches are allowed in the primer sequences. Calculated as the levehnstein edit distance using [edlib](https://github.com/Martinsos/edlib). You may want to set this higher for longer primer sequnces.
 - `--barcode_length`: how many bases to trim to the left and right of the primer sequences. If your barcode includes spacers make sure to take that into account (i.e., non-informative bases between the index and primer). Set this to 0 if you do not have barcodes.
+- `--index_template_file`: if demultiplexing, use this index file to specify or lookup indexes (see below for format).
 - `--guides_fasta`: (optional) fasta file contains guide sequences to count.
+- `--use_db`: boolean value, whether or not to look up indexes in the Genomics database.
+
+### Index template file format
+
+If you are using the Genomics database for index lookup, your index file should look like this:
+
+```
+index_name
+Fwd_01
+Fwd_02
+Rev_01
+Rev_02
+```
+
+This will fetch the index names from the database. If your indexes are custom ones, or you don not want to use the database, use the following file format:
+
+```
+index_name,direction,sequence
+Fwd_01,F,TAGATCGC
+Fwd_02,F,CTCTCTAT
+Rev_01,R,TCGCCTTA
+Rev_02,R,CTAGTACG
+```
+
+Note that both sequences must match the forward direction. We do not perform any reverse complementing of the reverse sequence.

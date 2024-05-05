@@ -1,4 +1,5 @@
-Fwd_01
-Fwd_02
-Rev_01
-Rev_02
+index_name,direction,sequence
+Fwd_01,F,TAGATCGC
+Fwd_02,F,CTCTCTAT
+Rev_01,R,TCGCCTTA
+Rev_02,R,CTAGTACG

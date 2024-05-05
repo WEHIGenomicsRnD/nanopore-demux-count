@@ -16,7 +16,7 @@ include { CreateConfigFile } from './modules/demux.nf'
 include { SplitCode } from './modules/demux.nf'
 include { IndexGuides } from './modules/count.nf'
 include { CountGuides } from './modules/count.nf'
-if (!workflow.stubRun && params.demultiplex && !params.is_config_file_provided) {
+if (params.use_db) {
     include { fromQuery } from 'plugin/nf-sqldb'
 }
 
@@ -41,7 +41,9 @@ workflow {
                          params.output_untrimmed)
 
     if (params.demultiplex) {
-        if (!params.is_config_file_provided) {
+        if (params.splitcode_config_file != null && params.splitcode_config_file != '') {
+            Channel.fromPath(params.splitcode_config_file).set{config_ch}
+        } else if (params.use_db) {
             def where_ch = []
             // Construct the where clause for the query
             new File(params.index_template_file).readLines().each { line ->
@@ -62,16 +64,33 @@ workflow {
                         def id = index[0]
                         def direction = index[3]
                         def group = direction == "F" ? "Fwd" : "Rev"
-                        def tag = direction == "F" ? index[1] : index[2] // index_sequence or index_sequence_rc
+                        def sequence = direction == "F" ? index[1] : index[2] // index_sequence or index_sequence_rc
                         def distances = direction == 'F' ? "${params.idx_5p_mismatch}" : "${params.idx_3p_mismatch}"
-                        def next = direction == 'F' ? '{{Rev}}' : '-'
+                        def nextTag = direction == 'F' ? '{{Rev}}' : '-'
                         def locations = direction == 'F' ? "0:0:${params.bases_num_r1}" : "0:${params.bases_num_r2}:0"
 
-                        return "$group\t$id\t$tag\t$distances\t$next\t1\t1\t$locations"
+                        return "$group\t$id\t$sequence\t$distances\t$nextTag\t1\t1\t$locations"
                 }
                 .collectFile(name: 'config.txt', newLine: true).set{config_ch}
         } else {
-            Channel.fromPath("${params.input_dir}/config.txt").set{config_ch}
+            // build the config file from the index template
+            def indexes = []
+            new File(params.index_template_file).readLines().each { line ->
+                if (!line.startsWith('index_name')) {
+                    def index = line.trim().split(',').each { it.trim() }
+                    def id = index[0]
+                    def direction = index[1]
+                    def group = direction == "F" ? "Fwd" : "Rev"
+                    def sequence = index[2]
+                    def distances = direction == 'F' ? "${params.idx_5p_mismatch}" : "${params.idx_3p_mismatch}"
+                    def nextTag = direction == 'F' ? '{{Rev}}' : '-'
+                    def locations = direction == 'F' ? "0:0:${params.bases_num_r1}" : "0:${params.bases_num_r2}:0"
+
+                    indexes << "$group\t$id\t$sequence\t$distances\t$nextTag\t1\t1\t$locations"
+                }
+            }
+            Channel.from( indexes )
+                .collectFile(name: 'config.txt', newLine: true).set{config_ch}
         }
         CreateConfigFile(config_ch).set{configFile}
         GenerateSelectFile(file(params.index_template_file)).set{selectTxt}
