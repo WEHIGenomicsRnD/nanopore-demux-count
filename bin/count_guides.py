@@ -32,6 +32,9 @@ def parse_args():
     parser.add_argument('guide_reference',
                         type=str,
                         help='Guide reference fasta file.')
+    parser.add_argument('--lenient',
+                        action='store_true',
+                        help='Count partial mappings.')
 
     return parser.parse_args()
 
@@ -69,12 +72,13 @@ def main():
             continue
 
         guide_len = guide_lens[read.reference_name]
-        if read.reference_end - read.reference_start != guide_len:
+        read_spans_ref = read.reference_end - read.reference_start == guide_len
+        if args.lenient or read_spans_ref:
+            counts[read.reference_name] += 1
+        else:
             counts['partial_map'] += 1
             print(f'Guide {read.reference_name} does not span the whole guide',
                   file=sys.stderr)
-
-        counts[read.reference_name] += 1
 
     sample_name = os.path.basename(args.bam).split(".")[0]
     print(f'guide\t{sample_name}')

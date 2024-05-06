@@ -42,6 +42,7 @@ process CountGuides {
 
     script:
     def outCounts = "${sampleName}_guide_counts.txt"
+    def lenientFlag = params.lenient_counts ? "--lenient" : ""
     /*
     count collation is a hacky bash script to get collated output,
     the script pastes the count files together, and then cuts out
@@ -58,7 +59,7 @@ process CountGuides {
             samtools view -S -b | \
             samtools sort -o \${sample}.bam
 
-        count_guides.py \${sample}.bam ${params.guides_fasta} > \${sample}_counts.txt
+        count_guides.py \${sample}.bam ${params.guides_fasta} ${lenientFlag} > \${sample}_counts.txt
     done
 
     paste *_counts.txt > tmpfile

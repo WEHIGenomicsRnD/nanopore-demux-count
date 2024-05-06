@@ -132,6 +132,11 @@
                     "default": "",
                     "fa_icon": "fas fa-file",
                     "description": "Reference fasta file containing guide sequences (leave blank to skip guide counting)."
+                },
+                "lenient_counts" : {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, count partially mapped reads."
                 }
             }
         },
