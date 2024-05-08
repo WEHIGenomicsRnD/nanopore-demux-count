@@ -1,12 +1,17 @@
-# Nanopore Overhang Pipeline
+# Nanopore demux-count pipeline
 
-A Nextflow pipeline for the preprocessing of reads using the overhang protocol run on Oxford Nanopore Technology. The pipeline locates the specified forward and reverse primer sequences and trims the read N bases upstream of the forward primer and N bases downstream of the reverse primer, where N is the barcode length.
+A Nextflow pipeline for the processing of reads from Oxford Nanopore Technology. The pipeline locates the specified forward and reverse primer sequences and trims the read N bases upstream of the forward primer and N bases downstream of the reverse primer, where N is the barcode length.
 
 If demultiplexing by barcodes is required, the pipeline can split the data into separate fastq files by sample. Sequences of interest can also be counted if a fasta file is provided of guide sequences.
 
 The read structure is typically:
 
 `[sequence][fwd_index][fwd_primer][sequence_of_interest][rev_primer][rev_index][sequence]`
+
+The pipeline uses the following tools:
+
+- [splitcode](https://github.com/pachterlab/splitcode) for demultiplexing
+- [minimap2](https://github.com/lh3/minimap2) for alignment
 
 ## How to install (WEHI only)
 
@@ -52,7 +57,8 @@ Here are the parameters you will need to set:
 - `--barcode_length`: how many bases to trim to the left and right of the primer sequences. If your barcode includes spacers make sure to take that into account (i.e., non-informative bases between the index and primer). Set this to 0 if you do not have barcodes.
 - `--index_template_file`: if demultiplexing, use this index file to specify or lookup indexes (see below for format).
 - `--guides_fasta`: (optional) fasta file contains guide sequences to count.
-- `--use_db`: boolean value, whether or not to look up indexes in the Genomics database.
+- `--use_db`: boolean value, default: false. Whether or not to look up indexes in the Genomics database.
+- `--lenient_counts`: boolean value, default: false. If true, reads do not have to span the whole guide sequence to be counted (they will be counted as a partial map).
 
 ### Index template file format
 
