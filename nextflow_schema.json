@@ -137,6 +137,11 @@
                     "type": "boolean",
                     "default": false,
                     "description": "If true, count partially mapped reads."
+                },
+                "count_only": {
+                    "type": "boolean",
+                    "default":false,
+                    "description": "If true, only count reads and skip trimming and demultiplexing."
                 }
             }
         },

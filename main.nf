@@ -33,14 +33,18 @@ workflow {
          .groupTuple()
          .set{input_ch}
 
-    trim_ch = TrimPrimer(input_ch,
-                         params.fwd_primer,
-                         params.rev_primer,
-                         params.primer_mismatches,
-                         params.barcode_length,
-                         params.output_untrimmed)
+    if (params.count_only) {
+        input_ch.set{ demux_ch }
+    } else {
+        trim_ch = TrimPrimer(input_ch,
+                             params.fwd_primer,
+                             params.rev_primer,
+                             params.primer_mismatches,
+                             params.barcode_length,
+                             params.output_untrimmed)
+    }
 
-    if (params.demultiplex) {
+    if (params.demultiplex && !params.count_only) {
         if (params.splitcode_config_file != null && params.splitcode_config_file != '') {
             Channel.fromPath(params.splitcode_config_file).set{config_ch}
         } else if (params.use_db) {
@@ -99,7 +103,7 @@ workflow {
                   selectTxt.done,
                   file("${params.outdir}/config.txt"),
                   file("${params.outdir}/select.txt")).fastq.set{demux_ch}        
-    } else {
+    } else if (!params.count_only) {
         trim_ch.trimmed_ch.set{demux_ch}
     }
 
