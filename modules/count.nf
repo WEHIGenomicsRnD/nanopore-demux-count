@@ -43,6 +43,7 @@ process CountGuides {
     script:
     def outCounts = "${sampleName}_guide_counts.txt"
     def lenientFlag = params.lenient_counts ? "--lenient" : ""
+    def extraThreads = task.cpus - 1
     /*
     count collation is a hacky bash script to get collated output,
     the script pastes the count files together, and then cuts out
@@ -54,10 +55,10 @@ process CountGuides {
     do
         sample=\${fastq%.fastq*}
 
-        minimap2 -ax map-ont -N 1 \
+        minimap2 -ax map-ont -N 1 -t ${task.cpus} -f ${params.minimap_f} \
             ${guides_index} \$fastq | \
-            samtools view -S -b | \
-            samtools sort -o \${sample}.bam
+            samtools view -S -b -@ ${extraThreads} | \
+            samtools sort -@ ${extraThreads} -o \${sample}.bam
 
         count_guides.py \${sample}.bam ${params.guides_fasta} ${lenientFlag} > \${sample}_counts.txt
     done

@@ -154,6 +154,12 @@
                     "fa_icon": "fas fa-cog",
                     "default": "",
                     "hidden": true
+                },
+                "minimap_f": {
+                    "type": "float",
+                    "default": 0.002,
+                    "description": "Minimap2 -f parameter (default = 0.002). Set this higher for highly repetitive sequences. Accepts integer threshold or fraction.",
+                    "hidden": true
                 }
             }
         }
