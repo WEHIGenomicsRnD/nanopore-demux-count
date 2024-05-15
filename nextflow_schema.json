@@ -60,13 +60,7 @@
                     "default": false,
                     "description": "Whether to output untrimmed reads."
                 }
-            },
-            "required": [
-                "fwd_primer",
-                "rev_primer",
-                "mismatches",
-                "barcode_length"
-            ]
+            }
         },
         "demultiplex_options": {
             "title": "Demultiplexing Options",
@@ -115,11 +109,7 @@
                     "default": "",
                     "description": "Optional ready-made config file for splitcode."
                 }
-            },
-            "required": [
-                "bases_num_r1",
-                "bases_num_r2"
-            ]
+            }
         },
         "count": {
             "title": "Count options",
