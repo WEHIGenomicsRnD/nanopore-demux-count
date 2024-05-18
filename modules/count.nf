@@ -38,18 +38,11 @@ process CountGuides {
 
     output:
     path "*.bam*"
-    path "*.txt"
+    path "*.txt", emit: counts
 
     script:
-    def outCounts = "${sampleName}_guide_counts.txt"
     def lenientFlag = params.lenient_counts ? "--lenient" : ""
     def extraThreads = task.cpus - 1
-    /*
-    count collation is a hacky bash script to get collated output,
-    the script pastes the count files together, and then cuts out
-    the relevant count fields (keep the first as a label column)
-    we will want to make this into a nice python script later
-    */
     """
     for fastq in ${fastqs};
     do
@@ -60,12 +53,28 @@ process CountGuides {
             samtools view -S -b -@ ${extraThreads} | \
             samtools sort -@ ${extraThreads} -o \${sample}.bam
 
-        count_guides.py \${sample}.bam ${params.guides_fasta} ${lenientFlag} > \${sample}_counts.txt
+        count_guides.py \${sample}.bam ${params.guides_fasta} ${sampleName} ${lenientFlag} > ${sampleName}_\${sample}_counts.txt
     done
+    """
+}
 
-    paste *_counts.txt > tmpfile
-    ncounts=\$(expr \$(ls *_counts.txt | wc -l | xargs) \\* 2)
-    fields_to_cut=\$(echo 1 \$(seq 2 2 \$ncounts) | sed 's/ /,/g')
-    cut -f \$fields_to_cut tmpfile > ${outCounts}
+process CollateCounts {
+    label = "CollateCounts"
+
+    publishDir "${params.outdir}/count", mode: 'copy'
+
+    conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
+              params.conda_env_location + '/biopython' :
+              projectDir + '/envs/biopython.yaml' }"
+
+    input:
+    path counts
+
+    output:
+    path "collated_counts.txt"
+
+    script:
+    """
+    collate_counts.py ${counts} > collated_counts.txt
     """
 }

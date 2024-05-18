@@ -102,10 +102,11 @@ with open(guides_filename, 'w') as guides_file:
         guides_file.write(f">guide_{guide_id}\n{guide_sequence}\n")
 
 # Write the FastQ file
-fastq_filename = "overhang_simulated_reads.fastq"
-with open(fastq_filename, 'w') as fastq_file:
-    for read_id in range(1, NUM_READS + 1):
-        combination_index = (read_id - 1) % len(INDEX_COMBINATIONS)
-        fastq_file.write(generate_varied_read(read_id, combination_index, guide_sequences))
+for sample in ['A', 'B']:
+    fastq_filename = f"simu_sample{sample}.fastq"
+    with open(fastq_filename, 'w') as fastq_file:
+        for read_id in range(1, NUM_READS + 1):
+            combination_index = (read_id - 1) % len(INDEX_COMBINATIONS)
+            fastq_file.write(generate_varied_read(read_id, combination_index, guide_sequences))
 
-print(f"FastQ file generated: {fastq_filename}")
+    print(f"FastQ file generated: {fastq_filename}")

@@ -16,6 +16,7 @@ include { CreateConfigFile } from './modules/demux.nf'
 include { SplitCode } from './modules/demux.nf'
 include { IndexGuides } from './modules/count.nf'
 include { CountGuides } from './modules/count.nf'
+include { CollateCounts } from './modules/count.nf'
 if (params.use_db) {
     include { fromQuery } from 'plugin/nf-sqldb'
 }
@@ -110,6 +111,7 @@ workflow {
     if (params.guides_fasta != null && params.guides_fasta != '') {
         def guidesIndex = file(params.guides_fasta).getSimpleName() + ".mmi"
         IndexGuides(params.guides_fasta).set{index_ch}
-        CountGuides(index_ch.done, demux_ch, file("${params.outdir}/${guidesIndex}"))
+        CountGuides(index_ch.done, demux_ch, file("${params.outdir}/${guidesIndex}")).set{count_ch}
+        CollateCounts(count_ch.counts.collect())
     }
 }

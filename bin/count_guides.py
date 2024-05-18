@@ -32,6 +32,9 @@ def parse_args():
     parser.add_argument('guide_reference',
                         type=str,
                         help='Guide reference fasta file.')
+    parser.add_argument('sample',
+                        type=str,
+                        help='Sample name.')
     parser.add_argument('--lenient',
                         action='store_true',
                         help='Count partial mappings.')
@@ -80,7 +83,7 @@ def main():
             print(f'Guide {read.reference_name} does not span the whole guide',
                   file=sys.stderr)
 
-    sample_name = os.path.basename(args.bam).split(".")[0]
+    sample_name = args.sample + "_" + os.path.basename(args.bam).split(".")[0]
     print(f'guide\t{sample_name}')
     for guide, count in counts.items():
         print(f'{guide}\t{count}')
