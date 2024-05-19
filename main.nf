@@ -23,6 +23,19 @@ if (params.use_db) {
 
 workflow {
 
+    // check that index template file is valid if not using db
+    if (!params.use_db) {
+        new File(params.index_template_file).readLines().each { line ->
+            if (line.split(",").size() < 3) {
+                error("""
+    Index template invalid! Must be comma-separated file
+    containing index_name, direction (F/R) and sequence.
+    If intending to use the Genomics database instead,
+    set use_db to true. """)
+            }
+        }
+    }
+
     Channel.fromPath("${params.input_dir}/*.{fq,fastq}{,.gz}")
              .ifEmpty {
                      error("""
