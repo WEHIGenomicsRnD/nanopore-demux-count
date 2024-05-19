@@ -8,6 +8,8 @@ Maintainer  : Marek Cmero
 Portability : POSIX
 '''
 import pandas as pd
+import sys
+from io import StringIO
 from natsort import index_natsorted, order_by_index
 from argparse import ArgumentParser
 
@@ -45,7 +47,12 @@ def main():
 
     new_index = order_by_index(result_df.index, index_natsorted(df['guide']))
     result_df = result_df.reindex(index=new_index)
-    print(result_df.to_string(index=False))
+
+    # write to stdout
+    output = StringIO()
+    result_df.to_csv(output, sep='\t', index=False)
+    output.seek(0)
+    print(output.read(), file=sys.stdout)
 
 
 if __name__ == "__main__":
