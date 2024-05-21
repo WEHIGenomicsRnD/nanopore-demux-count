@@ -85,7 +85,7 @@ workflow {
                         def sequence = direction == "F" ? index[1] : index[2] // index_sequence or index_sequence_rc
                         def distances = direction == 'F' ? "${params.idx_5p_mismatch}" : "${params.idx_3p_mismatch}"
                         def nextTag = direction == 'F' ? '{{Rev}}' : '-'
-                        def locations = direction == 'F' ? "0:0:${params.bases_num_r1}" : "0:${params.bases_num_r2}:0"
+                        def locations = direction == 'F' ? "0:0:${params.barcode_length}" : "0:-${params.barcode_length}:0"
 
                         return "$group\t$id\t$sequence\t$distances\t$nextTag\t1\t1\t$locations"
                 }
@@ -102,7 +102,7 @@ workflow {
                     def sequence = index[2]
                     def distances = direction == 'F' ? "${params.idx_5p_mismatch}" : "${params.idx_3p_mismatch}"
                     def nextTag = direction == 'F' ? '{{Rev}}' : '-'
-                    def locations = direction == 'F' ? "0:0:${params.bases_num_r1}" : "0:${params.bases_num_r2}:0"
+                    def locations = direction == 'F' ? "0:0:${params.barcode_length}" : "0:-${params.barcode_length}:0"
 
                     indexes << "$group\t$id\t$sequence\t$distances\t$nextTag\t1\t1\t$locations"
                 }

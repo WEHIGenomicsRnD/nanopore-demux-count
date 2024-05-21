@@ -73,16 +73,6 @@
                     "default": false,
                     "description": "Whether to demultiplex the reads."
                 },
-                "bases_num_r1": {
-                    "type": "integer",
-                    "default": 10,
-                    "description": "Number of bases to search for forward index from start of read."
-                },
-                "bases_num_r2": {
-                    "type": "integer",
-                    "default": 13,
-                    "description": "Number of bases to search for reverse index from end of read (number should be negative)."
-                },
                 "idx_5p_mismatch": {
                     "type": "integer",
                     "default": 1,

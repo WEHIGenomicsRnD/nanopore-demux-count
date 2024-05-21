@@ -36,14 +36,37 @@ nextflow run main.nf \
     --outdir $output_directory \
     --fwd_primer $fwd_primer \
     --rev_primer $rev_primer \
-    --mismatches 3 \
+    --primer_mismatches 3 \
     --barcode_length 12 \
+    --idx_5p_mismatch 1 \
+    --idx_3p_mismatch 1 \
     --index_template_file $index_file \
     --guides_fasta $guides_fasta \
     --use_db false
 ```
 
-If you are running on WEHI's Milton HPC, remember to run `module load nextflow` before running nextflow and also run with `-profile log,milton`.
+If you are running on WEHI's Milton HPC:
+
+```bash
+module load nextflow
+nextflow run main.nf \
+    --input_dir $path_to_fastqs \
+    --outdir $output_directory \
+    --fwd_primer $fwd_primer \
+    --rev_primer $rev_primer \
+    --primer_mismatches 3 \
+    --barcode_length 12 \
+    --idx_5p_mismatch 1 \
+    --idx_3p_mismatch 1 \
+    --index_template_file $index_file \
+    --guides_fasta $guides_fasta \
+    --use_db true \
+    -profile log,milton
+```
+
+Note that this uses the Genomics database for the primer lookup. To do this you will need to either run through Seqera or have set your `DB` secret key to access the database.
+
+If you are running against a large number of highly similar reference sequence, you may need to set the `--minimap_f` parameter. For exmaple, if you have 10s of thousands of sequences, set this to something like `1000`.
 
 ## Configuration
 
@@ -53,12 +76,15 @@ Here are the parameters you will need to set:
 - `--outdir`: directory path where output is written.
 - `--fwd_primer`: forward primer sequence.
 - `--rev_primer`: reverse primer sequence.
-- `--mismatches`: how many mismatches are allowed in the primer sequences. Calculated as the levehnstein edit distance using [edlib](https://github.com/Martinsos/edlib). You may want to set this higher for longer primer sequnces.
+- `--primer_mismatches`: how many mismatches are allowed in the primer sequences. Calculated as the levehnstein edit distance using [edlib](https://github.com/Martinsos/edlib). You may want to set this higher for longer primer sequnces.
 - `--barcode_length`: how many bases to trim to the left and right of the primer sequences. If your barcode includes spacers make sure to take that into account (i.e., non-informative bases between the index and primer). Set this to 0 if you do not have barcodes.
+- `--idx_5p_mismatches`: mismatches allowed in the 5' index.
+- `--idx_3p_mismatches`: mismatches allowed in the 3' index.
 - `--index_template_file`: if demultiplexing, use this index file to specify or lookup indexes (see below for format).
 - `--guides_fasta`: (optional) fasta file contains guide sequences to count.
 - `--use_db`: boolean value, default: false. Whether or not to look up indexes in the Genomics database.
 - `--lenient_counts`: boolean value, default: false. If true, reads do not have to span the whole guide sequence to be counted (they will be counted as a partial map).
+- `--count_only`: only perform counting of fastq files input via `--input_dir`, i.e., skip primer trimming and demultiplexing.
 
 ### Index template file format
 
