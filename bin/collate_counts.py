@@ -45,7 +45,7 @@ def main():
         else:
             result_df = pd.merge(result_df, df, how='outer', on='guide')
 
-    new_index = order_by_index(result_df.index, index_natsorted(df['guide']))
+    new_index = order_by_index(result_df.index, index_natsorted(result_df['guide']))
     result_df = result_df.reindex(index=new_index)
 
     # write to stdout
