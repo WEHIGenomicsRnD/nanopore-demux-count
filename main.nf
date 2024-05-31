@@ -24,7 +24,7 @@ if (params.use_db) {
 workflow {
 
     // check that index template file is valid if not using db
-    if (!params.use_db) {
+    if (!params.use_db && !params.count_only) {
         new File(params.index_template_file).readLines().each { line ->
             if (line.split(",").size() < 3) {
                 error("""
