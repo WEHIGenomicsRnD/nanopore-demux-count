@@ -61,6 +61,7 @@ def parse_args():
 
 def trim_read(read_seq, read_qual, fwd_primer, rev_primer, mismatches, barcode_length, rc_read=False):
     read_seq = rc(read_seq) if rc_read else read_seq
+    read_qual = read_qual[::-1] if rc_read else read_qual
     fwd_result = edlib.align(fwd_primer, read_seq, mode="HW", task="path", k=mismatches)
     rev_result = edlib.align(rev_primer, read_seq, mode="HW", task="path", k=mismatches)
 
