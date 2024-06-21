@@ -122,6 +122,11 @@
                     "type": "boolean",
                     "default":false,
                     "description": "If true, only count reads and skip trimming and demultiplexing."
+                },
+                "consensus": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, generate consensus sequences from guide alignments."
                 }
             }
         },

@@ -1,0 +1,8 @@
+name: racon-medaka
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - racon
+  - medaka
+

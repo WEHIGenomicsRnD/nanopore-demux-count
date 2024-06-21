@@ -17,6 +17,7 @@ include { SplitCode } from './modules/demux.nf'
 include { IndexGuides } from './modules/count.nf'
 include { CountGuides } from './modules/count.nf'
 include { CollateCounts } from './modules/count.nf'
+include { Consensus } from './subworkflows/consensus'
 if (params.use_db) {
     include { fromQuery } from 'plugin/nf-sqldb'
 }
@@ -89,7 +90,7 @@ workflow {
 
                         return "$group\t$id\t$sequence\t$distances\t$nextTag\t1\t1\t$locations"
                 }
-                .collectFile(name: 'config.txt', newLine: true).set{config_ch}
+                .collectFile(name: 'config_tmp.txt', newLine: true).set{config_ch}
         } else {
             // build the config file from the index template
             def indexes = []
@@ -108,7 +109,7 @@ workflow {
                 }
             }
             Channel.from( indexes )
-                .collectFile(name: 'config.txt', newLine: true).set{config_ch}
+                .collectFile(name: 'config_tmp.txt', newLine: true).set{config_ch}
         }
         CreateConfigFile(config_ch).set{configFile}
         GenerateSelectFile(file(params.index_template_file)).set{selectTxt}
@@ -126,5 +127,22 @@ workflow {
         IndexGuides(params.guides_fasta).set{index_ch}
         CountGuides(index_ch.done, demux_ch, file("${params.outdir}/${guidesIndex}")).set{count_ch}
         CollateCounts(count_ch.counts.collect())
+
+        if (params.consensus) {
+            // reformat channel for consensus input
+            // to tuple (sampleName, bamFile, fastqFile)
+            // filter out unmapped and out files from splitcode
+            count_ch.alignments.flatMap { sample ->
+                def (sampleName, bamFiles, fastqFiles) = sample
+                return bamFiles.indices.collect { index ->
+                    [sampleName, bamFiles[index], fastqFiles[index]]
+                }
+            }.filter{ sampleName, bamFile, fastqFile -> 
+                !bamFile.getName().startsWith("unmapped.bam") && 
+                !bamFile.getName().startsWith("out.bam") 
+            }.set{ bam_ch }
+
+            Consensus(bam_ch, file(params.guides_fasta), params.medaka_model)
+        }
     }
 }

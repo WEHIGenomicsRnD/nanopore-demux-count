@@ -37,7 +37,7 @@ process CountGuides {
     path guides_index
 
     output:
-    path "*.bam*"
+    tuple val(sampleName), path("*.bam"), path(fastqs), emit: alignments
     path "*.txt", emit: counts
 
     script:
