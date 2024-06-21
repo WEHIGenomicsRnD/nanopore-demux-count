@@ -11,8 +11,8 @@ process Medaka {
               projectDir + '/envs/racon-medaka.yaml' }"
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/medaka:1.4.4--py38h130def0_0' :
-        'biocontainers/medaka:1.4.4--py38h130def0_0' }"
+        'https://depot.galaxyproject.org/singularity/medaka:1.11.1--py310h87e71ce_0' :
+        'biocontainers/medaka:1.11.1--py310h87e71ce_0' }"
 
     input:
     tuple val(sampleName), path(reads), path(assembly)
@@ -28,6 +28,7 @@ process Medaka {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: reads.getSimpleName()
+    // todo: remove rezip_ prefix
     """
     medaka_consensus \\
         -t $task.cpus \\
