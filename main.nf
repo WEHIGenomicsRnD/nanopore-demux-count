@@ -77,7 +77,7 @@ workflow {
                                   index_direction
                             FROM amplicon_index
                             WHERE index_name IN (${where_clause});"""
-            
+
             Channel.fromQuery(query, db: 'my-db', batchSize:100)
                 .map { index ->
                         def id = index[0]
@@ -117,7 +117,7 @@ workflow {
                   configFile.done.first(),
                   selectTxt.done,
                   file("${params.outdir}/config.txt"),
-                  file("${params.outdir}/select.txt")).fastq.set{demux_ch}        
+                  file("${params.outdir}/select.txt")).fastq.set{demux_ch}
     } else if (!params.count_only) {
         trim_ch.trimmed_ch.set{demux_ch}
     }
@@ -132,16 +132,24 @@ workflow {
             // reformat channel for consensus input
             // to tuple (sampleName, bamFile, fastqFile)
             // filter out unmapped and out files from splitcode
-            count_ch.alignments.flatMap { sample ->
-                def (sampleName, bamFiles, fastqFiles) = sample
-                return bamFiles.indices.collect { index ->
-                    [sampleName, bamFiles[index], fastqFiles[index]]
-                }
-            }.filter{ sampleName, bamFile, fastqFile -> 
-                !bamFile.getName().startsWith("unmapped.bam") && 
-                !bamFile.getName().startsWith("out.bam") 
-            }.set{ bam_ch }
-
+            if (params.count_only) {
+                count_ch.alignments.filter { sampleName, bamFile, fastqFile ->
+                    !bamFile.getName().startsWith("unmapped.bam") &&
+                    !bamFile.getName().startsWith("out.bam")
+                }.set{ bam_ch }
+            } else {
+                // in this case, bamFiles and fastqFiles are arrays
+                // not singular elements per sample
+                count_ch.alignments.flatMap { sample ->
+                    def (sampleName, bamFiles, fastqFiles) = sample
+                    return bamFiles.indices.collect { index ->
+                        [sampleName, bamFiles[index], fastqFiles[index]]
+                    }
+                }.filter{ sampleName, bamFile, fastqFile ->
+                    !bamFile.getName().startsWith("unmapped.bam") &&
+                    !bamFile.getName().startsWith("out.bam")
+                }.set{ bam_ch }
+            }
             Consensus(bam_ch, file(params.guides_fasta), params.medaka_model)
         }
     }

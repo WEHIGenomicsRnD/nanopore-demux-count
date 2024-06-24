@@ -22,7 +22,7 @@ process PrepareForConsensus {
     def sample = bam.getSimpleName()
     """
     samtools view -h ${bam} > ${sample}.sam
-    zcat ${fastq} | bgzip -c - > rezip_${sample}.fastq.gz
+    zcat < ${fastq} | bgzip -c - > rezip_${sample}.fastq.gz
     """
 }
 

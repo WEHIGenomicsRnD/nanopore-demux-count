@@ -27,14 +27,20 @@ process Medaka {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: reads.getSimpleName().replaceFirst("rezip_", "")
+    // will create a blank fasta file if racon assembly is blank
+    // as for some sample we will not be able to generate a consensus
     """
-    medaka_consensus \\
-        -t $task.cpus \\
-        $args \\
-        -i $reads \\
-        -d $assembly \\
-        -m $medaka_model \\
-        -o ./
+    if [ -s ${assembly} ]; then
+        medaka_consensus \\
+            -t $task.cpus \\
+            $args \\
+            -i $reads \\
+            -d $assembly \\
+            -m $medaka_model \\
+            -o ./
+    else
+        touch consensus.fasta
+    fi
 
     mv consensus.fasta ${prefix}.fa
 
