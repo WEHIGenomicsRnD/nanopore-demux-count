@@ -4,8 +4,6 @@ process Racon {
     tag "${sam.getSimpleName()}"
     label 'Racon'
 
-    publishDir "${params.outdir}/consensus/${sampleName}", mode: 'copy'
-
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
               params.conda_env_location + '/racon-medaka' :
               projectDir + '/envs/racon-medaka.yaml' }"
@@ -20,7 +18,6 @@ process Racon {
 
     output:
     tuple val(sampleName), path(reads), path('*_racon_consensus.fasta') , emit: racon_consensus
-    path "versions.yml"          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -35,10 +32,5 @@ process Racon {
         $args \\
         "${assembly}" > \\
         ${prefix}_racon_consensus.fasta
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        racon: \$( racon --version 2>&1 | sed 's/^.*v//' )
-    END_VERSIONS
     """
 }

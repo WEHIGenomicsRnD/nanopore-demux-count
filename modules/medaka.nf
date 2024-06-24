@@ -20,15 +20,13 @@ process Medaka {
 
     output:
     tuple val(sampleName), path("*.fa.gz"), emit: assembly
-    path "versions.yml"             , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: reads.getSimpleName()
-    // todo: remove rezip_ prefix
+    def prefix = task.ext.prefix ?: reads.getSimpleName().replaceFirst("rezip_", "")
     """
     medaka_consensus \\
         -t $task.cpus \\
@@ -41,10 +39,5 @@ process Medaka {
     mv consensus.fasta ${prefix}.fa
 
     gzip -n ${prefix}.fa
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        medaka: \$( medaka --version 2>&1 | sed 's/medaka //g' )
-    END_VERSIONS
     """
 }
