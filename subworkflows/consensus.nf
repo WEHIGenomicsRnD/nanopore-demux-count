@@ -1,5 +1,6 @@
 include { Racon } from '../modules/racon'
 include { Medaka } from '../modules/medaka'
+include { AlignPairs } from '../modules/align_pairs.nf'
 
 process PrepareForConsensus {
     label = "PrepareForConsensus"
@@ -41,6 +42,11 @@ workflow Consensus {
 
         consensus_sequences = Medaka.out.assembly
 
+        AlignPairs(consensus_sequences, reference)
+
+        pair_alignments = AlignPairs.out.pair_alignments
+
     emit:
         consensus_sequences
+        pair_alignments
 }
