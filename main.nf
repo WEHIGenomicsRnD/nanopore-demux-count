@@ -129,28 +129,25 @@ workflow {
         CollateCounts(count_ch.counts.collect())
 
         if (params.consensus) {
-            // reformat channel for consensus input
-            // to tuple (sampleName, bamFile, fastqFile)
-            // filter out unmapped and out files from splitcode
             if (params.count_only) {
-                count_ch.alignments.filter { sampleName, bamFile, fastqFile ->
-                    !bamFile.getName().startsWith("unmapped.bam") &&
-                    !bamFile.getName().startsWith("out.bam")
-                }.set{ bam_ch }
+                demux_ch.set{ fastq_ch }
             } else {
-                // in this case, bamFiles and fastqFiles are arrays
+                // in this case fastqFiles are arrays
                 // not singular elements per sample
-                count_ch.alignments.flatMap { sample ->
-                    def (sampleName, bamFiles, fastqFiles) = sample
-                    return bamFiles.indices.collect { index ->
-                        [sampleName, bamFiles[index], fastqFiles[index]]
+                // reformat channel for consensus input
+                // to tuple (sampleName, fastqFile)
+                // filter out unmapped and out files from splitcode
+                demux_ch.flatMap { sample ->
+                    def (sampleName, fastqFiles) = sample
+                    return fastqFiles.indices.collect { index ->
+                        [sampleName, fastqFiles[index]]
                     }
-                }.filter{ sampleName, bamFile, fastqFile ->
-                    !bamFile.getName().startsWith("unmapped.bam") &&
-                    !bamFile.getName().startsWith("out.bam")
-                }.set{ bam_ch }
+                }.filter{ sampleName, fastqFile ->
+                    !fastqFile.getName().startsWith("unmapped.fastq") &&
+                    !fastqFile.getName().startsWith("out.fastq")
+                }.set{ fastq_ch }
             }
-            Consensus(bam_ch, file(params.guides_fasta), params.medaka_model)
+            Consensus(fastq_ch, file(params.guides_fasta), params.medaka_model)
         }
     }
 }

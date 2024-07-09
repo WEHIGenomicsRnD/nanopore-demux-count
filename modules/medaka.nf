@@ -7,15 +7,16 @@ process Medaka {
     publishDir "${params.outdir}/consensus/${sampleName}", mode: 'copy'
 
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
-              params.conda_env_location + '/racon-medaka' :
-              projectDir + '/envs/racon-medaka.yaml' }"
+              params.conda_env_location + '/medaka' :
+              projectDir + '/envs/medaka.yaml' }"
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/medaka:1.11.1--py310h87e71ce_0' :
         'biocontainers/medaka:1.11.1--py310h87e71ce_0' }"
 
     input:
-    tuple val(sampleName), path(reads), path(assembly)
+    tuple val(sampleName), path(reads) 
+    path(reference)
     val(medaka_model)
 
     output:
@@ -27,15 +28,15 @@ process Medaka {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: reads.getSimpleName().replaceFirst("rezip_", "")
-    // will create a blank fasta file if racon assembly is blank
+    // will create a blank fasta file if fastq file input is blank
     // as for some sample we will not be able to generate a consensus
     """
-    if [ -s ${assembly} ]; then
+    if [ -s ${reads} ]; then
         medaka_consensus \\
             -t $task.cpus \\
             $args \\
             -i $reads \\
-            -d $assembly \\
+            -d $reference \\
             -m $medaka_model \\
             -o ./
     else

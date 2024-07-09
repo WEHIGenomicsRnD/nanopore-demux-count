@@ -1,10 +1,8 @@
-include { Racon } from '../modules/racon'
 include { Medaka } from '../modules/medaka'
 include { AlignPairs } from '../modules/align_pairs.nf'
 
 process PrepareForConsensus {
     label = "PrepareForConsensus"
-    // convert bam file to sam for racon and
     // rezip fastq file using bgzip for medaka
 
     publishDir "${params.outdir}/count/${sampleName}"
@@ -14,15 +12,14 @@ process PrepareForConsensus {
               projectDir + '/envs/minimap-samtools.yaml' }"
 
     input:
-    tuple val(sampleName), path(bam), path(fastq)
+    tuple val(sampleName), path(fastq)
 
     output:
-    tuple val(sampleName), path("*.sam"), path("rezip_*.fastq.gz"), emit: racon_input
+    tuple val(sampleName), path("rezip_*.fastq.gz"), emit: rezipped
 
     script:
-    def sample = bam.getSimpleName()
+    def sample = fastq.getSimpleName()
     """
-    samtools view -h ${bam} > ${sample}.sam
     zcat < ${fastq} | bgzip -c - > rezip_${sample}.fastq.gz
     """
 }
@@ -36,9 +33,7 @@ workflow Consensus {
     main:
         PrepareForConsensus(consensus_input)
 
-        Racon(PrepareForConsensus.out.racon_input, reference)
-        
-        Medaka(Racon.out.racon_consensus, medaka_model)
+        Medaka(PrepareForConsensus.out.rezipped, reference, medaka_model)
 
         consensus_sequences = Medaka.out.assembly
 
