@@ -13,7 +13,7 @@ import sys
 import pysam
 from Bio import SeqIO
 from argparse import ArgumentParser
-
+import collections
 
 def parse_args():
     '''Parse arguments'''
@@ -53,18 +53,26 @@ def main():
         print(f'{args.guide_reference} does not exist', file=sys.stderr)
         sys.exit(1)
 
+    sample_name = args.sample + "_" + os.path.basename(args.bam).split(".")[0]
+    outfile=f"{sample_name}_overall.txt"
+    out=open(outfile,'w')
+    out.write("guide\ttype\t"+sample_name+"\n") 
     # create a reference look up for guie lengths
     guide_lens = {}
     with open(args.guide_reference) as handle:
         for record in SeqIO.parse(handle, "fasta"):
             guide_lens[record.id] = len(record.seq)
 
+    ref_partial=collections.defaultdict(dict)
     counts = {'unmapped': 0, 'partial_map': 0}
     for guide in guide_lens:
         counts[guide] = 0
+        ref_partial[guide]['lenient'] = 0
+        ref_partial[guide]['strict'] = 0
 
     bamfile = pysam.AlignmentFile(args.bam, 'r')
     for read in bamfile:
+#        print(read)
         if read.is_unmapped:
             counts['unmapped'] += 1
             continue
@@ -75,6 +83,13 @@ def main():
             continue
 
         guide_len = guide_lens[read.reference_name]
+        bam_len = read.reference_end - read.reference_start
+        if bam_len != guide_len:
+                ref_partial[read.reference_name]['lenient'] += 1
+        else:
+            ref_partial[read.reference_name]['strict'] += 1
+
+
         read_spans_ref = read.reference_end - read.reference_start == guide_len
         if args.lenient or read_spans_ref:
             counts[read.reference_name] += 1
@@ -88,6 +103,10 @@ def main():
     for guide, count in counts.items():
         print(f'{guide}\t{count}')
 
+    for g,c in ref_partial.items():
+        for k,v in c.items():
+           print(f'{k}- {g} - {ref_partial[g][k]}',file=sys.stderr)
+           out.write(g+"\t"+k+"\t"+str(ref_partial[g][k])+"\n")
 
 if __name__ == "__main__":
     main()

@@ -72,6 +72,7 @@ process CollateCounts {
 
     output:
     path "collated_counts.txt"
+    path "collated_overall.txt"
 
     script:
     """
