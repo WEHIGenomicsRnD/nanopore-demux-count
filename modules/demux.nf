@@ -63,15 +63,6 @@ process CreateConfigFile {
 process SplitCode{
     label 'SplitCode'
 
-    if ( "${workflow.stubRun}" == "false" ) {
-        queue 'regular'
-        cpus  16
-        memory { 8.GB * task.attempt }
-        errorStrategy { 'retry' }
-        maxRetries 5
-        time '24h'
-    }
-
     tag "${reads.getSimpleName()}"
     publishDir "${params.outdir}/split/${reads.getSimpleName()}", mode: 'copy'
     container 'oras://ghcr.io/wehi-researchcomputing/splitcode_container:latest'
