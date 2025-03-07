@@ -34,3 +34,22 @@ process TrimPrimer {
         ${fastq} | gzip > ${outFile}
     """
 }
+
+
+process MergeFastq{
+    label = 'MergeFastq'
+
+    publishDir "${params.outdir}/merge_fastq", mode: 'copy'
+
+    input:
+    tuple val(key),val(fastqs)
+
+    output:
+    path "*.fastq.gz", emit: merge_ch
+
+    script:
+    def merged = "${key}.fastq.gz"
+    """
+       cat ${fastqs.join(' ')} > ${merged}
+    """
+}

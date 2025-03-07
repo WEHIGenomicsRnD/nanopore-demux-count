@@ -11,6 +11,7 @@ println "*                                                       *"
 println "*********************************************************"
 
 include { TrimPrimer } from './modules/trim.nf'
+include { MergeFastq } from './modules/trim.nf'
 include { GenerateSelectFile } from './modules/demux.nf'
 include { CreateConfigFile } from './modules/demux.nf'
 include { SplitCode } from './modules/demux.nf'
@@ -37,16 +38,31 @@ workflow {
         }
     }
 
-    Channel.fromPath("${params.input_dir}/*.{fq,fastq}{,.gz}")
-             .ifEmpty {
+
+    Channel
+        .fromPath( "${params.input_dir}/**" )
+           .ifEmpty {
                      error("""
-                     No samples could be found! Please check whether your input directory
-                     contains any fastq files (.fq or .fastq with optional .gz compression).
+                     No sample folder could be found! Please check whether your input directory
+                     contains barcode* folder for concatenating the files for each sample.
                      """)
-         }
-         .map{ it -> [it.getSimpleName(), it]}
-         .groupTuple()
-         .set{input_ch}
+           }
+          .flatten()
+          .map { file-> [file.parent.name, file] }
+          .groupTuple()
+          .filter{ Sid, file ->
+          !Sid.startsWith("unclassified")
+          }
+          .set{rawfastq_ch}
+
+    merge_ch = MergeFastq(rawfastq_ch)
+
+    merge_ch.map{ it -> [it.getSimpleName(), it]}
+      .groupTuple()
+      .set{input_ch}
+
+
+
 
     if (params.count_only) {
         input_ch.set{ demux_ch }
