@@ -40,21 +40,22 @@ workflow {
 
 
     Channel
-        .fromPath( "${params.input_dir}/**" )
+        .fromPath( "${params.input_dir}/**fastq.gz" )
            .ifEmpty {
                      error("""
                      No sample folder could be found! Please check whether your input directory
                      contains barcode* folder for concatenating the files for each sample.
                      """)
            }
-          .flatten()
-          .map { file-> [file.parent.name, file] }
-          .groupTuple()
-          .filter{ Sid, file ->
-          !Sid.startsWith("unclassified")
-          }
-          .set{rawfastq_ch}
+           .flatten()
+           .map { file-> [file.parent.name, file] }
+           .groupTuple()
+           .filter{ Sid, file ->
+              !Sid.startsWith("unclassified")
+           }
+           .set{rawfastq_ch}
 
+    rawfastq_ch.view()
     merge_ch = MergeFastq(rawfastq_ch)
 
     merge_ch.map{ it -> [it.getSimpleName(), it]}
