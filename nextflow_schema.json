@@ -33,31 +33,25 @@
             "title": "Primer Options",
             "type": "object",
             "description": "",
-            "default": "",
             "properties": {
                 "fwd_primer": {
                     "type": "string",
-                    "default": "",
                     "description": "Forward primer sequence"
                 },
                 "rev_primer": {
                     "type": "string",
-                    "default": "",
                     "description": "Reverse primer sequence"
                 },
                 "primer_mismatches": {
                     "type": "integer",
-                    "default": 3,
                     "description": "number of mismatches allowed in fwd or rev primers"
                 },
                 "barcode_length": {
                     "type": "integer",
-                    "default": 13,
                     "description": "Length of barcode sequence."
                 },
                 "output_untrimmed": {
                     "type": "boolean",
-                    "default": false,
                     "description": "Whether to output untrimmed reads."
                 }
             }
@@ -66,22 +60,18 @@
             "title": "Demultiplexing Options",
             "type": "object",
             "description": "",
-            "default": "",
             "properties": {
                 "demultiplex" : {
                     "type": "boolean",
-                    "default": false,
                     "description": "Whether to demultiplex the reads."
                 },
                 "idx_5p_mismatch": {
                     "type": "integer",
-                    "default": 1,
-                    "description": "Number of mismatches allowed in 5' index (default = 1)."
+                    "description": "Number of mismatches allowed in 5' index."
                 },
                 "idx_3p_mismatch": {
                     "type": "integer",
-                    "default": 1,
-                    "description": "Number of mismatches allowed in 3' index (default = 1)."
+                    "description": "Number of mismatches allowed in 3' index."
                 },
                 "index_template_file": {
                     "type": "string",
@@ -89,12 +79,10 @@
                 },
                 "use_db" : {
                     "type": "boolean",
-                    "default": false,
                     "description": "Whether to use the Genomics database for index lookup."
                 },
                 "splitcode_config_file": {
                     "type": "string",
-                    "default": "",
                     "description": "Optional ready-made config file for splitcode."
                 }
             }
@@ -103,28 +91,27 @@
             "title": "Count options",
             "type": "object",
             "description": "",
-            "default": "",
             "properties": {
                 "guides_fasta" : {
                     "type": "string",
-                    "default": "",
                     "fa_icon": "fas fa-file",
                     "description": "Reference fasta file containing guide sequences (leave blank to skip guide counting)."
                 },
                 "lenient_counts" : {
                     "type": "boolean",
-                    "default": false,
                     "description": "If true, count partially mapped reads."
                 },
                 "count_only": {
                     "type": "boolean",
-                    "default":false,
                     "description": "If true, only count reads and skip trimming and demultiplexing."
                 },
                 "consensus": {
                     "type": "boolean",
-                    "default": false,
                     "description": "If true, generate consensus sequences from guide alignments."
+                },
+                "minimap_f": {
+                    "type": "number",
+                    "description": "Minimap2 -f parameter (default = 0.002). Set this higher for highly repetitive sequences. Accepts integer threshold or fraction."
                 }
             }
         },
@@ -140,13 +127,6 @@
                     "format": "directory-path",
                     "description": "Use this location for pre-build conda environments (if blank, new conda environments will be created).",
                     "fa_icon": "fas fa-cog",
-                    "default": "",
-                    "hidden": true
-                },
-                "minimap_f": {
-                    "type": "float",
-                    "default": 0.002,
-                    "description": "Minimap2 -f parameter (default = 0.002). Set this higher for highly repetitive sequences. Accepts integer threshold or fraction.",
                     "hidden": true
                 }
             }
