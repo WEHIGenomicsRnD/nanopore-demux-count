@@ -85,8 +85,6 @@
                 },
                 "index_template_file": {
                     "type": "string",
-                    "fa_icon": "fas fa-file-csv",
-                    "format": "file-path",
                     "description": "Text file containing index names used (must match database or config file IDs)."
                 },
                 "use_db" : {
