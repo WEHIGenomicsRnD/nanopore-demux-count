@@ -75,7 +75,7 @@ process Minimap_align {
 
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
               params.conda_env_location + '/biopython' :
-              projectDir + '/envs/minimap-samtools.yaml' }"
+              projectDir + '/envs/minimap-align.yaml' }"
 
     input:
     tuple val(sampleName), path(fastqs)
