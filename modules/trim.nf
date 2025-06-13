@@ -53,3 +53,32 @@ process MergeFastq{
        cat ${fastqs.join(' ')} > ${merged}
     """
 }
+
+
+process BuildReference{
+    label = 'BuildReference'
+
+    publishDir "${params.outdir}/reference", mode: 'copy'
+ 
+    conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
+              params.conda_env_location + '/biopython' :
+              projectDir + '/envs/biopython.yaml' }"
+
+    input:
+    tuple val(sampleName), path(fastq)
+    val fwd_primer
+    val rev_primer
+    val mismatches
+
+    output:
+    path("*reference.txt"), emit: ref_ch
+
+    script:
+    """
+    fetch_reference.py \
+        --reads ${fastq} \
+        --fwd_primer ${fwd_primer} \
+        --rev_primer ${rev_primer} \
+        --mismatches ${mismatches} \
+    """
+}

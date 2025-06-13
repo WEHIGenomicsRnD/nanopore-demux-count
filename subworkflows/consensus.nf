@@ -1,5 +1,6 @@
-include { Medaka } from '../modules/medaka'
+include { Medaka_split } from '../modules/medaka'
 include { AlignPairs } from '../modules/align_pairs.nf'
+include { Minimap_align } from '../modules/minimap.nf'
 
 process PrepareForConsensus {
     label = "PrepareForConsensus"
@@ -32,10 +33,12 @@ workflow Consensus {
 
     main:
         PrepareForConsensus(consensus_input)
+        
+        Minimap_align(PrepareForConsensus.out.rezipped, reference)
 
-        Medaka(PrepareForConsensus.out.rezipped, reference, medaka_model)
+        Medaka_split(Minimap_align.out.bam, reference, medaka_model)
 
-        consensus_sequences = Medaka.out.assembly
+        consensus_sequences = Medaka_split.out.assembly
 
         AlignPairs(consensus_sequences, reference)
 

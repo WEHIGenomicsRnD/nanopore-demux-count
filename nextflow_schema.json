@@ -109,6 +109,10 @@
                     "type": "boolean",
                     "description": "If true, generate consensus sequences from guide alignments."
                 },
+		"count_dict": {
+                    "type": "boolean",
+		    "description": "If true, generate dictionary based counts"
+	        },
                 "minimap_f": {
                     "type": "number",
                     "description": "Minimap2 -f parameter (default = 0.002). Set this higher for highly repetitive sequences. Accepts integer threshold or fraction."

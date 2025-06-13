@@ -48,3 +48,47 @@ process Medaka {
     gzip -n ${prefix}.fa
     """
 }
+
+
+process Medaka_split {
+    tag "${bam.getSimpleName()}"
+    label 'Medaka'
+
+    publishDir "${params.outdir}/consensus/${sampleName}", mode: 'copy'
+
+    conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
+              params.conda_env_location + '/medaka' :
+              projectDir + '/envs/medaka.yaml' }"
+
+
+    input:
+    tuple val(sampleName), path(bam)
+    path(reference)
+    val(medaka_model)
+
+    output:
+    tuple val(sampleName), path("*.fa.gz"), emit: assembly
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: bam.getSimpleName()
+    // will create a blank fasta file if fastq file input is blank
+    // as for some sample we will not be able to generate a consensus
+    """
+    if [ -s ${bam} ]; then
+         samtools index ${bam}
+         medaka consensus $bam consensus.hdf --model ${medaka_model} --batch_size 100 --threads 2
+         medaka stitch consensus.hdf ${reference} consensus.fasta --threads 2
+         
+    else
+        touch consensus.fasta
+    fi
+
+    mv consensus.fasta ${prefix}.fa
+
+    gzip -n ${prefix}.fa
+    """
+}

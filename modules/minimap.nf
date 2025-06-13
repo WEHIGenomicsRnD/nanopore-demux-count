@@ -65,3 +65,35 @@ process MINIMAP2_ALIGN {
 
     """
 }
+
+process Minimap_align {
+
+    tag "${fastqs.getSimpleName()}"
+    label = "Minimap"
+
+    publishDir "${params.outdir}/alignment/${sampleName}", mode: 'copy'
+
+    conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
+              params.conda_env_location + '/biopython' :
+              projectDir + '/envs/minimap-samtools.yaml' }"
+
+    input:
+    tuple val(sampleName), path(fastqs)
+    path(reference)
+
+    output:
+    tuple val(sampleName), path("*.bam"), emit: bam
+    tuple val(sampleName), path("*.bai"), emit: index
+
+    script:
+    def extraThreads = task.cpus - 1
+    def prefix = task.ext.prefix ?: fastqs.getSimpleName()
+    def sname = prefix.startsWith("rezip") ? prefix.replaceFirst("rezip_","") : prefix
+    """
+    minimap2 -ax map-ont -N 1 -t ${task.cpus} -f ${params.minimap_f} \
+            ${reference} ${fastqs} | \
+            samtools view -S -b -@ ${extraThreads} | \
+            samtools sort -@ ${extraThreads} -o ${sname}.bam
+    samtools index ${sname}.bam
+   """
+}

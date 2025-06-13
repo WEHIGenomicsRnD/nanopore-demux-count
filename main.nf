@@ -11,6 +11,7 @@ println "*                                                       *"
 println "*********************************************************"
 
 include { TrimPrimer } from './modules/trim.nf'
+include { BuildReference } from './modules/trim.nf'
 include { MergeFastq } from './modules/trim.nf'
 include { GenerateSelectFile } from './modules/demux.nf'
 include { CreateConfigFile } from './modules/demux.nf'
@@ -18,6 +19,8 @@ include { SplitCode } from './modules/demux.nf'
 include { IndexGuides } from './modules/count.nf'
 include { CountGuides } from './modules/count.nf'
 include { CollateCounts } from './modules/count.nf'
+include { MergeDictCounts } from './modules/count.nf'
+include { CountDict } from './modules/count.nf'
 include { Consensus } from './subworkflows/consensus'
 if (params.use_db) {
     include { fromQuery } from 'plugin/nf-sqldb'
@@ -55,7 +58,6 @@ workflow {
            }
            .set{rawfastq_ch}
 
-    rawfastq_ch.view()
     merge_ch = MergeFastq(rawfastq_ch)
 
     merge_ch.map{ it -> [it.getSimpleName(), it]}
@@ -137,6 +139,13 @@ workflow {
                   file("${params.outdir}/select.txt")).fastq.set{demux_ch}
     } else if (!params.count_only) {
         trim_ch.trimmed_ch.set{demux_ch}
+    }
+
+    if (params.count_dict) {
+
+       CountDict(demux_ch,params.fwd_primer,params.rev_primer,params.primer_mismatches).set{dict_ch}
+       MergeDictCounts(dict_ch.counts_dict.collect())
+       
     }
 
     if (params.guides_fasta != null && params.guides_fasta != '') {

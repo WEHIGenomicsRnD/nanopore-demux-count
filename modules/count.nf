@@ -79,3 +79,65 @@ process CollateCounts {
     collate_counts.py ${counts} > collated_counts.txt
     """
 }
+
+
+process CountDict{
+    label = "CountDict"
+
+    publishDir "${params.outdir}/count_dict/${sampleName}", mode: 'copy'
+
+    conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
+              params.conda_env_location + '/biopython' :
+              projectDir + '/envs/biopython.yaml' }"
+
+    input:
+    tuple val(sampleName) , path(fastqs)
+    val fwd_primer
+    val rev_primer
+    val mismatches
+
+    output:
+    path("*.txt"), emit: counts_dict
+
+    script:
+    """
+    for fastq in ${fastqs};
+    do
+       if [ -n "\$(gunzip < \${fastq} | head -c 1 | tr '\0\n' __)" ]; then
+          custom_count.py \
+              --reads \$fastq \
+              --fwd_primer ${fwd_primer} \
+              --rev_primer ${rev_primer} \
+              --mismatches ${mismatches} \
+              --sample ${sampleName}
+
+       else
+          touch ${sampleName}_ref-free_count.txt
+       fi
+    done
+    """
+
+}
+
+
+process MergeDictCounts {
+    label = "MergeDictCounts"
+
+    publishDir "${params.outdir}/count_dict", mode: 'copy'
+
+    conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
+              params.conda_env_location + '/biopython' :
+              projectDir + '/envs/biopython.yaml' }"
+
+    input:
+    path counts
+
+    output:
+    path "merged_filtered_counts.txt"
+    path "merged_all_counts.txt"
+
+    script:
+    """
+    merge_custom_count.py ${counts}
+    """
+}
