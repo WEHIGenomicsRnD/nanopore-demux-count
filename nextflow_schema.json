@@ -26,6 +26,11 @@
                     "fa_icon": "fas fa-folder-open",
                     "description": "Input directory containing your fastq file(s). You have to use absolute paths to storage.",
                     "format": "directory-path"
+                },
+		"excel_file" : {
+                    "type": "string",
+                    "fa_icon": "fas fa-file",
+                    "description": "Excel file containing index , primers and guide sequence."
                 }
             }
         },
@@ -34,14 +39,6 @@
             "type": "object",
             "description": "",
             "properties": {
-                "fwd_primer": {
-                    "type": "string",
-                    "description": "Forward primer sequence"
-                },
-                "rev_primer": {
-                    "type": "string",
-                    "description": "Reverse primer sequence"
-                },
                 "primer_mismatches": {
                     "type": "integer",
                     "description": "number of mismatches allowed in fwd or rev primers"
@@ -73,10 +70,6 @@
                     "type": "integer",
                     "description": "Number of mismatches allowed in 3' index."
                 },
-                "index_template_file": {
-                    "type": "string",
-                    "description": "Text file containing index names used (must match database or config file IDs)."
-                },
                 "use_db" : {
                     "type": "boolean",
                     "description": "Whether to use the Genomics database for index lookup."
@@ -92,11 +85,6 @@
             "type": "object",
             "description": "",
             "properties": {
-                "guides_fasta" : {
-                    "type": "string",
-                    "fa_icon": "fas fa-file",
-                    "description": "Reference fasta file containing guide sequences (leave blank to skip guide counting)."
-                },
                 "lenient_counts" : {
                     "type": "boolean",
                     "description": "If true, count partially mapped reads."

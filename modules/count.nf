@@ -25,7 +25,7 @@ process IndexGuides {
 process CountGuides {
     label = "CountGuides"
 
-    publishDir "${params.outdir}/count/${sampleName}", mode: 'copy'
+    publishDir "${params.outdir}/${primerName}/count/${sampleName}", mode: 'copy'
 
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
               params.conda_env_location + '/minimap-samtools' :
@@ -33,12 +33,12 @@ process CountGuides {
 
     input:
     val ready
-    tuple val(sampleName), path(fastqs)
+    tuple val(primerName), val(sampleName), path(fastqs)
     path guides_index
 
     output:
-    tuple val(sampleName), path("*.bam"), path(fastqs), emit: alignments
-    path "*.txt", emit: counts
+    tuple val(sampleName), path("*.bam"), path(fastqs) , val(primerName) , emit: alignments
+    tuple val(primerName) , path("*.txt") , emit: counts
 
     script:
     def lenientFlag = params.lenient_counts ? "--lenient" : ""
@@ -53,7 +53,7 @@ process CountGuides {
             samtools view -S -b -@ ${extraThreads} | \
             samtools sort -@ ${extraThreads} -o \${sample}.bam
 
-        count_guides.py \${sample}.bam ${params.guides_fasta} ${sampleName} ${lenientFlag} > ${sampleName}_\${sample}_counts.txt
+        count_guides.py \${sample}.bam ${guides_index} ${sampleName} ${lenientFlag} > ${sampleName}_\${sample}_counts.txt
     done
     """
 }
@@ -61,14 +61,14 @@ process CountGuides {
 process CollateCounts {
     label = "CollateCounts"
 
-    publishDir "${params.outdir}/count", mode: 'copy'
+    publishDir "${params.outdir}/${primerName}/count", mode: 'copy'
 
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
               params.conda_env_location + '/biopython' :
               projectDir + '/envs/biopython.yaml' }"
 
     input:
-    path counts
+    tuple val(primerName), path(counts)
 
     output:
     path "collated_counts.txt"
@@ -84,20 +84,18 @@ process CollateCounts {
 process CountDict{
     label = "CountDict"
 
-    publishDir "${params.outdir}/count_dict/${sampleName}", mode: 'copy'
+    publishDir "${params.outdir}/${primerName}/count_dict/${sampleName}", mode: 'copy'
 
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
               params.conda_env_location + '/biopython' :
               projectDir + '/envs/biopython.yaml' }"
 
     input:
-    tuple val(sampleName) , path(fastqs)
-    val fwd_primer
-    val rev_primer
+    tuple val(primerName), val(fwd_primer) ,val(rev_primer), val(sampleName) , path(fastqs)
     val mismatches
 
     output:
-    path("*.txt"), emit: counts_dict
+    tuple val(primerName), path("*.txt") , emit: counts_dict
 
     script:
     """
@@ -123,14 +121,14 @@ process CountDict{
 process MergeDictCounts {
     label = "MergeDictCounts"
 
-    publishDir "${params.outdir}/count_dict", mode: 'copy'
+    publishDir "${params.outdir}/${primerName}/count_dict", mode: 'copy'
 
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
               params.conda_env_location + '/biopython' :
               projectDir + '/envs/biopython.yaml' }"
 
     input:
-    path counts
+    tuple val(primerName), path(counts)
 
     output:
     path "merged_filtered_counts.txt"

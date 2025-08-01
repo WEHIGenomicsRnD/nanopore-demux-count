@@ -22,24 +22,13 @@ include { CollateCounts } from './modules/count.nf'
 include { MergeDictCounts } from './modules/count.nf'
 include { CountDict } from './modules/count.nf'
 include { Consensus } from './subworkflows/consensus'
+include { ProcessExcel } from './modules/preprocess.nf'
+
 if (params.use_db) {
     include { fromQuery } from 'plugin/nf-sqldb'
 }
 
 workflow {
-
-    // check that index template file is valid if not using db
-    if (!params.use_db && !params.count_only) {
-        new File(params.index_template_file).readLines().each { line ->
-            if (line.split(",").size() < 3) {
-                error("""
-    Index template invalid! Must be comma-separated file
-    containing index_name, direction (F/R) and sequence.
-    If intending to use the Genomics database instead,
-    set use_db to true. """)
-            }
-        }
-    }
 
 
     Channel
@@ -62,29 +51,39 @@ workflow {
 
     merge_ch.map{ it -> [it.getSimpleName(), it]}
       .groupTuple()
-      .set{input_ch}
+      .set{base_input_ch}
 
 
+    ProcessExcel(params.excel_file).set{excel_ch}
+   
+    excel_ch.primer_ch.splitCsv(header:true)
+          .map { row -> tuple(row.name,row.fwd_primer,row.rev_primer)}
+          .set{primer_list_ch}
 
+    // Combining the input fastq and primer channel    
+    primer_list_ch.combine(base_input_ch).set{base_ch}
 
-    if (params.count_only) {
+    base_ch
+         .map { primerName, fwd_primer, rev_primer, sampleName, fastq_files ->
+             tuple( primerName, sampleName, fastq_files )
+         }.set{input_ch}
+
+    if (params.count_only && !params.demultiplex) {
         input_ch.set{ demux_ch }
     } else {
-        trim_ch = TrimPrimer(input_ch,
-                             params.fwd_primer,
-                             params.rev_primer,
+        trim_ch = TrimPrimer(base_ch,
                              params.primer_mismatches,
                              params.barcode_length,
                              params.output_untrimmed)
     }
-
-    if (params.demultiplex && !params.count_only) {
+ 
+    if (params.demultiplex) {
         if (params.splitcode_config_file != null && params.splitcode_config_file != '') {
             Channel.fromPath(params.splitcode_config_file).set{config_ch}
         } else if (params.use_db) {
             def where_ch = []
             // Construct the where clause for the query
-            new File(params.index_template_file).readLines().each { line ->
+            new File(excel_ch.index_ch).readLines().each { line ->
                 if (line.trim() != 'index_name') {
                     where_ch << "'${line.trim()}'"
                 }
@@ -113,46 +112,50 @@ workflow {
         } else {
             // build the config file from the index template
             def indexes = []
-            new File(params.index_template_file).readLines().each { line ->
-                if (!line.startsWith('index_name')) {
-                    def index = line.trim().split(',').each { it.trim() }
-                    def id = index[0]
-                    def direction = index[1]
+            excel_ch.index_ch.view() 
+            excel_ch.index_ch.splitCsv(header:true)
+                   .map { row ->
+                    def id = row.index_name
+                    def direction = row.direction
                     def group = direction == "F" ? "Fwd" : "Rev"
-                    def sequence = index[2]
+                    def sequence = row.sequence
                     def distances = direction == 'F' ? "${params.idx_5p_mismatch}" : "${params.idx_3p_mismatch}"
                     def nextTag = direction == 'F' ? '{{Rev}}' : '-'
                     def locations = direction == 'F' ? "0:0:${params.barcode_length}" : "0:-${params.barcode_length}:0"
 
-                    indexes << "$group\t$id\t$sequence\t$distances\t$nextTag\t1\t1\t$locations"
-                }
+                    return "$group\t$id\t$sequence\t$distances\t$nextTag\t1\t1\t$locations"
+                
             }
-            Channel.from( indexes )
-                .collectFile(name: 'config_tmp.txt', newLine: true).set{config_ch}
+            .collectFile(name: 'config_tmp.txt', newLine: true).set{config_ch}
         }
+//        config_ch.view()
         CreateConfigFile(config_ch).set{configFile}
-        GenerateSelectFile(file(params.index_template_file)).set{selectTxt}
+        GenerateSelectFile(excel_ch.index_ch).set{selectTxt}
         SplitCode(trim_ch.trimmed_ch,
                   configFile.done.first(),
                   selectTxt.done,
                   file("${params.outdir}/config.txt"),
                   file("${params.outdir}/select.txt")).fastq.set{demux_ch}
-    } else if (!params.count_only) {
+    } else if (! params.count_only) {
         trim_ch.trimmed_ch.set{demux_ch}
     }
 
     if (params.count_dict) {
-
-       CountDict(demux_ch,params.fwd_primer,params.rev_primer,params.primer_mismatches).set{dict_ch}
-       MergeDictCounts(dict_ch.counts_dict.collect())
+       primer_list_ch.combine(demux_ch, by: 0).set{count_dict_ch}
+       count_dict_ch.view()
+       CountDict(count_dict_ch,params.primer_mismatches).set{dict_ch}
+       MergeDictCounts(dict_ch.counts_dict)
        
     }
 
-    if (params.guides_fasta != null && params.guides_fasta != '') {
-        def guidesIndex = file(params.guides_fasta).getSimpleName() + ".mmi"
-        IndexGuides(params.guides_fasta).set{index_ch}
-        CountGuides(index_ch.done, demux_ch, file("${params.outdir}/${guidesIndex}")).set{count_ch}
-        CollateCounts(count_ch.counts.collect())
+
+    if (params.count_only | params.consensus) {
+        excel_ch.guides.set{guides_ch}
+
+        def guidesIndex = excel_ch.guides.getSimpleName() + ".mmi"
+        IndexGuides(guides_ch).set{index_ch}
+        CountGuides(index_ch.done, demux_ch, guides_ch).set{count_ch}
+        CollateCounts(count_ch.counts)
 
         if (params.consensus) {
             if (params.count_only) {
@@ -164,16 +167,16 @@ workflow {
                 // to tuple (sampleName, fastqFile)
                 // filter out unmapped and out files from splitcode
                 demux_ch.flatMap { sample ->
-                    def (sampleName, fastqFiles) = sample
+                    def (primerName, sampleName, fastqFiles) = sample
                     return fastqFiles.indices.collect { index ->
-                        [sampleName, fastqFiles[index]]
+                        [primerName, sampleName, fastqFiles[index]]
                     }
-                }.filter{ sampleName, fastqFile ->
+                }.filter{ primerName, sampleName, fastqFile ->
                     !fastqFile.getName().startsWith("unmapped.fastq") &&
                     !fastqFile.getName().startsWith("out.fastq")
                 }.set{ fastq_ch }
             }
-            Consensus(fastq_ch, file(params.guides_fasta), params.medaka_model)
+            Consensus(fastq_ch, guides_ch, params.medaka_model)
         }
     }
 }

@@ -6,17 +6,17 @@ process PrepareForConsensus {
     label = "PrepareForConsensus"
     // rezip fastq file using bgzip for medaka
 
-    publishDir "${params.outdir}/count/${sampleName}"
+    publishDir "${params.outdir}/${primerName}/count/${sampleName}"
 
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
               params.conda_env_location + '/minimap-samtools' :
               projectDir + '/envs/minimap-samtools.yaml' }"
 
     input:
-    tuple val(sampleName), path(fastq)
+    tuple val(primerName) , val(sampleName), path(fastq)
 
     output:
-    tuple val(sampleName), path("rezip_*.fastq.gz"), emit: rezipped
+    tuple val(sampleName), path("rezip_*.fastq.gz"), val(primerName), emit: rezipped
 
     script:
     def sample = fastq.getSimpleName()

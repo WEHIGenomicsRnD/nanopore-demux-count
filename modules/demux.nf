@@ -64,18 +64,18 @@ process SplitCode{
     label 'SplitCode'
 
     tag "${reads.getSimpleName()}"
-    publishDir "${params.outdir}/split/${reads.getSimpleName()}", mode: 'copy'
+    publishDir "${params.outdir}/${primerName}/split/${reads.getSimpleName()}", mode: 'copy'
     container 'oras://ghcr.io/wehi-researchcomputing/splitcode_container:latest'
    
     input:
-    tuple val(sampleName), path(reads)
+    tuple val(primerName), val(fwd_primer) , val(rev_primer), val(sampleName), path(reads)
     val configFileReady
     val selectFileReady
     path(config)
     path(select)
     
     output:
-    tuple val(sampleName), path("*.fastq*"), emit: fastq
+    tuple val(primerName), val(sampleName), path("*.fastq*") , emit: fastq
     path "*.txt"
 
     script:

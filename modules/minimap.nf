@@ -71,19 +71,19 @@ process Minimap_align {
     tag "${fastqs.getSimpleName()}"
     label = "Minimap"
 
-    publishDir "${params.outdir}/alignment/${sampleName}", mode: 'copy'
+    publishDir "${params.outdir}/${primerName}/alignment/${sampleName}", mode: 'copy'
 
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
-              params.conda_env_location + '/biopython' :
+              params.conda_env_location + '/minimap-samtools' :
               projectDir + '/envs/minimap-align.yaml' }"
 
     input:
-    tuple val(sampleName), path(fastqs)
+    tuple val(sampleName), path(fastqs), val(primerName)
     path(reference)
 
     output:
-    tuple val(sampleName), path("*.bam"), emit: bam
-    tuple val(sampleName), path("*.bai"), emit: index
+    tuple val(sampleName), path("*.bam"), val(primerName), emit: bam
+    tuple val(sampleName), path("*.bai"), val(primerName),  emit: index
 
     script:
     def extraThreads = task.cpus - 1

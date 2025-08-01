@@ -2,18 +2,18 @@ process AlignPairs {
     tag "${consensusFasta.getSimpleName()}"
     label = "AlignPairs"
 
-    publishDir "${params.outdir}/consensus/${sampleName}", mode: 'copy'
+    publishDir "${params.outdir}/${primerName}/consensus/${sampleName}", mode: 'copy'
 
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
               params.conda_env_location + '/biopython' :
               projectDir + '/envs/biopython.yaml' }"
 
     input:
-    tuple val(sampleName), path(consensusFasta)
+    tuple val(sampleName), path(consensusFasta), val(primerName)
     path(reference)
 
     output:
-    tuple val(sampleName), path("*.txt"), emit: pair_alignments
+    tuple val(sampleName), path("*.txt"), val(primerName), emit: pair_alignments
 
     script:
     def prefix = task.ext.prefix ?: consensusFasta.getSimpleName()

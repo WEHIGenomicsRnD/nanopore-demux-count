@@ -54,7 +54,7 @@ process Medaka_split {
     tag "${bam.getSimpleName()}"
     label 'Medaka'
 
-    publishDir "${params.outdir}/consensus/${sampleName}", mode: 'copy'
+    publishDir "${params.outdir}/${primerName}/consensus/${sampleName}", mode: 'copy'
 
     conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
               params.conda_env_location + '/medaka' :
@@ -62,12 +62,12 @@ process Medaka_split {
 
 
     input:
-    tuple val(sampleName), path(bam)
+    tuple val(sampleName), path(bam), val(primerName)
     path(reference)
     val(medaka_model)
 
     output:
-    tuple val(sampleName), path("*.fa.gz"), emit: assembly
+    tuple val(sampleName), path("*.fa.gz"), val(primerName), emit: assembly
 
     when:
     task.ext.when == null || task.ext.when
