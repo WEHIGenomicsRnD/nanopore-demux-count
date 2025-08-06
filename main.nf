@@ -30,7 +30,7 @@ if (params.use_db) {
 
 workflow {
 
-
+    index_ch = Channel.empty()
     Channel
         .fromPath( "${params.input_dir}/**fastq.gz" )
            .ifEmpty {
@@ -44,21 +44,36 @@ workflow {
            .groupTuple()
            .filter{ Sid, file ->
               !Sid.startsWith("unclassified")
-           }
-           .set{rawfastq_ch}
+           }.set{rawfastq_ch}
 
+
+    // Merge fastq files
     merge_ch = MergeFastq(rawfastq_ch)
 
     merge_ch.map{ it -> [it.getSimpleName(), it]}
       .groupTuple()
       .set{base_input_ch}
 
+    // Checking if excel file is present
+    if (params.excel_file != ""){
+       ProcessExcel(params.excel_file).set{excel_ch}
 
-    ProcessExcel(params.excel_file).set{excel_ch}
-   
-    excel_ch.primer_ch.splitCsv(header:true)
+       excel_ch.primer_ch.splitCsv(header:true)
           .map { row -> tuple(row.name,row.fwd_primer,row.rev_primer)}
           .set{primer_list_ch}
+  
+       excel_ch.index_ch.set{index_file_ch}
+
+
+    }else if( params.excel_file == ""){
+        if (params.index_template_file != ''){
+              index_file_ch = Channel.fromPath(params.index_template_file)
+              primer_list_ch = Channel.of(["primer1",params.fwd_primer,params.rev_primer ])
+        }else{
+           error "Index Template file is required {params.index_template_file)"
+        }
+    }
+   
 
     // Combining the input fastq and primer channel    
     primer_list_ch.combine(base_input_ch).set{base_ch}
@@ -112,8 +127,8 @@ workflow {
         } else {
             // build the config file from the index template
             def indexes = []
-            excel_ch.index_ch.view() 
-            excel_ch.index_ch.splitCsv(header:true)
+            index_file_ch.view() 
+            index_file_ch.splitCsv(header:true)
                    .map { row ->
                     def id = row.index_name
                     def direction = row.direction
@@ -128,9 +143,9 @@ workflow {
             }
             .collectFile(name: 'config_tmp.txt', newLine: true).set{config_ch}
         }
-//        config_ch.view()
+
         CreateConfigFile(config_ch).set{configFile}
-        GenerateSelectFile(excel_ch.index_ch).set{selectTxt}
+        GenerateSelectFile(index_file_ch).set{selectTxt}
         SplitCode(trim_ch.trimmed_ch,
                   configFile.done.first(),
                   selectTxt.done,
@@ -150,9 +165,12 @@ workflow {
 
 
     if (params.count_only | params.consensus) {
-        excel_ch.guides.set{guides_ch}
+        if (params.guides_fasta != ''){
+              guides_ch = Channel.fromPath(params.guides_fasta)
+        }else{
+              excel_ch.guides.set{guides_ch}
+        }
 
-        def guidesIndex = excel_ch.guides.getSimpleName() + ".mmi"
         IndexGuides(guides_ch).set{index_ch}
         CountGuides(index_ch.done, demux_ch, guides_ch).set{count_ch}
         CollateCounts(count_ch.counts)
