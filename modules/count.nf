@@ -38,7 +38,7 @@ process CountGuides {
 
     output:
     tuple val(sampleName), path("*.bam"), path(fastqs) , val(primerName) , emit: alignments
-    tuple val(primerName) , path("*.txt") , emit: counts
+    tuple val(primerName) , val(sampleName), path("*.txt") , emit: counts
 
     script:
     def lenientFlag = params.lenient_counts ? "--lenient" : ""
@@ -68,15 +68,15 @@ process CollateCounts {
               projectDir + '/envs/biopython.yaml' }"
 
     input:
-    tuple val(primerName), path(counts)
+    tuple val(primerName), val(sampleName), path(counts)
 
     output:
-    path "collated_counts.txt"
-    path "collated_overall.txt"
+    path "${sampleName}.collated_counts.txt"
+    path "${sampleName}.collated_overall.txt"
 
     script:
     """
-    collate_counts.py ${counts} > collated_counts.txt
+    collate_counts.py ${sampleName} ${counts} > ${sampleName}.collated_counts.txt
     """
 }
 
@@ -95,7 +95,7 @@ process CountDict{
     val mismatches
 
     output:
-    tuple val(primerName), path("*.txt") , emit: counts_dict
+    tuple val(primerName), val(sampleName), path("*.txt") , emit: counts_dict
 
     script:
     """

@@ -25,6 +25,10 @@ def parse_args():
         Outputs a table of merged counts
         '''
     parser = ArgumentParser(description=description)
+
+    parser.add_argument('sample_name',
+                        type=str,
+                        help='Sample Name')
     parser.add_argument('count_files',
                         nargs='+',
                         type=str,
@@ -48,7 +52,8 @@ def merge_files(cfile,result_df,rfile):
 def main():
     args = parse_args()
 
-    out=open("collated_overall.txt",'w')
+    sample_name=args.sample_name
+    out=open(f"{sample_name}.collated_overall.txt",'w')
     result_df = pd.DataFrame()
     overall_df= pd.DataFrame()
     for count_file in args.count_files:
