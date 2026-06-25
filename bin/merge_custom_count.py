@@ -18,6 +18,10 @@ def parse_args():
         Outputs a table of merged counts
         '''
     parser = ArgumentParser(description=description)
+
+    parser.add_argument('primer_name',
+                        type=str,
+                        help='Primer Name')
     parser.add_argument('count_files',
                         nargs='+',
                         type=str,
@@ -45,8 +49,12 @@ def merge_files(count_file,df_param):
 
 def main():
 
-    filt_outfile=open('merged_filtered_counts.txt','w')
-    all_outfile=open('merged_all_counts.txt','w')
+    args = parse_args()
+
+    primer_name=args.primer_name
+
+    filt_outfile=open(f"{primer_name}.merged_filtered_counts.txt",'w')
+    all_outfile=open(f"{primer_name}.merged_all_counts.txt",'w')
     args = parse_args()
 
     filt_df = pd.DataFrame()

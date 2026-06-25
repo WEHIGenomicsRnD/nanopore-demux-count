@@ -21,6 +21,7 @@ include { CountGuides } from './modules/count.nf'
 include { CollateCounts } from './modules/count.nf'
 include { MergeDictCounts } from './modules/count.nf'
 include { CountDict } from './modules/count.nf'
+include { MergePrimerCounts } from './modules/count.nf'
 include { Consensus } from './subworkflows/consensus'
 include { ProcessExcel } from './modules/preprocess.nf'
 
@@ -157,10 +158,10 @@ workflow {
 
     if (params.count_dict) {
        primer_list_ch.combine(demux_ch, by: 0).set{count_dict_ch}
-       count_dict_ch.view()
+//       count_dict_ch.view()
        CountDict(count_dict_ch,params.primer_mismatches).set{dict_ch}
-       MergeDictCounts(dict_ch.counts_dict)
-       
+       final_counts_ch = MergeDictCounts(dict_ch.counts_dict).merged_dict.collect()
+       MergePrimerCounts(final_counts_ch)       
     }
 
 

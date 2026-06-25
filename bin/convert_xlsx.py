@@ -38,7 +38,10 @@ def main():
        primers = pd.read_excel(args.excel_file, sheet_name=0)
        index =   pd.read_excel(args.excel_file, sheet_name=1)
 
-       primers['name'] = ['primer'+str(n+1) for n in range(primers.shape[0])]
+       if primers.shape[1] < 3:
+          primers['name'] = ['primer'+str(n+1) for n in range(primers.shape[0])]
+       else:
+          primers['name'] = primers.iloc[:, 2]
 #    index['direction'] = index['direction'].apply(lambda x: 'Fwd' if x.startswith('F') else 'Rev')
 
        primers.to_csv(primer_out, sep=',', index=False)

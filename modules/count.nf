@@ -95,7 +95,7 @@ process CountDict{
     val mismatches
 
     output:
-    tuple val(primerName), val(sampleName), path("*.txt") , emit: counts_dict
+    tuple val(primerName) , path("*.txt") , emit: counts_dict
 
     script:
     """
@@ -131,11 +131,34 @@ process MergeDictCounts {
     tuple val(primerName), path(counts)
 
     output:
-    path "merged_filtered_counts.txt"
-    path "merged_all_counts.txt"
+    path("*.merged_filtered_counts.txt") , emit: merged_dict
+    path "*.merged_all_counts.txt"
 
     script:
     """
-    merge_custom_count.py ${counts}
+    merge_custom_count.py ${primerName} ${counts}
+    """
+}
+
+
+process MergePrimerCounts {
+    label = "MergePrimerCounts"
+
+    publishDir "${params.outdir}/primer_finalresults/", mode: 'copy'
+
+    conda "${ params.conda_env_location != null && params.conda_env_location != '' ?
+              params.conda_env_location + '/biopython' :
+              projectDir + '/envs/biopython.yaml' }"
+
+    input:
+    path(counts)
+
+    output:
+    path("*.fa") , emit: merged_primer
+    path "AllPrimer_stats.txt"
+
+    script:
+    """
+    collate_primer_dict.py ${counts}
     """
 }
